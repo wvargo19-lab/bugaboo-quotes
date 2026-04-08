@@ -3,9 +3,7 @@
   functions = "netlify/functions"
 
 [functions]
-  external_node_modules = []
-  
-[[redirects]]
-  from = "/export"
-  to = "/.netlify/functions/export"
-  status = 200
+  directory = "netlify/functions"
+
+[functions."export"]
+  runtime = "python3.9"
