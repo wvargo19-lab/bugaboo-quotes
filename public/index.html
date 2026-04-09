@@ -839,9 +839,8 @@ function exportExcel(){
     function sc(sheetName,addr,val){
       if(!wb.Sheets[sheetName]) return;
       const ws=wb.Sheets[sheetName];
-      if(!ws[addr]) ws[addr]={};
-      ws[addr].v=val;
-      ws[addr].t=(typeof val==='number')?'n':'s';
+      const existing=ws[addr]||{};
+      ws[addr]={...existing, v:val, t:(typeof val==='number')?'n':'s'};
       delete ws[addr].f;
     }
 
