@@ -1,0 +1,9 @@
+{
+  "name": "bugaboo-export",
+  "version": "1.0.0",
+  "description": "Excel export function for Bugaboo Quote Builder",
+  "main": "index.js",
+  "dependencies": {
+    "xlsx-populate": "^1.21.0"
+  }
+}
