@@ -1,9 +1,6 @@
 [build]
-  publish = "public"
+  publish = "."
   functions = "netlify/functions"
 
 [functions]
-  directory = "netlify/functions"
-
-[functions."export"]
-  runtime = "python3.9"
+  node_bundler = "esbuild"
