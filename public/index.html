@@ -210,6 +210,35 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
   .app{display:block}.qp{padding:0;background:#fff;min-height:auto}
   .qcard{box-shadow:none;border-radius:0}body,html{background:#fff}
 }
+
+/* CONFIRM MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:24px 28px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--wht);margin-bottom:10px}
+.modal-msg{font-size:13px;color:var(--txt);line-height:1.6;margin-bottom:20px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+.modal-cancel{background:transparent;border:1px solid var(--bdr);border-radius:var(--rad);padding:8px 18px;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s}
+.modal-cancel:hover{border-color:var(--g3);color:var(--g3)}
+.modal-confirm{background:#6b2020;border:1px solid #a03030;border-radius:var(--rad);padding:8px 18px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.modal-confirm:hover{background:#a03030}
+/* LOGIN SCREEN */
+.login-overlay{position:fixed;inset:0;background:var(--bk);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:36px 40px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.login-logo-badge{width:40px;height:40px;border-radius:10px;background:var(--g);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff}
+.login-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--wht)}
+.login-sub{font-size:10px;color:var(--mut);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+.login-field{margin-bottom:14px}
+.login-field label{display:block;font-size:9px;letter-spacing:.5px;color:var(--mut);margin-bottom:4px;font-weight:500;text-transform:uppercase}
+.login-field input{width:100%;background:var(--bk);border:1px solid var(--bdr);border-radius:var(--rad);padding:10px 12px;color:var(--wht);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color .15s}
+.login-field input:focus{border-color:var(--g3)}
+.login-btn{width:100%;background:var(--g);border:none;border-radius:var(--rad);padding:13px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;cursor:pointer;transition:background .15s;margin-top:6px}
+.login-btn:hover{background:var(--g3)}
+.login-err{color:#e05a5a;font-size:11px;margin-top:8px;min-height:16px;text-align:center}
+.logout-btn{background:transparent;border:1px solid var(--bdr);border-radius:4px;padding:2px 9px;font-size:9px;color:var(--mut);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.3px}
+.logout-btn:hover{border-color:#e05a5a;color:#e05a5a}
+.role-badge{font-size:9px;color:var(--g3);background:rgba(87,168,82,.15);border-radius:10px;padding:2px 8px;font-family:'DM Mono',monospace;letter-spacing:.5px;margin-right:4px}
 </style>
 </head>
 <body>
@@ -263,7 +292,140 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
   </button>
 </nav>
 <div class="toast" id="toast"></div>
+<!-- DELETE CONFIRMATION MODAL -->
+<div id="del-modal" style="display:none"></div>
+
+<!-- LOGIN SCREEN -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-badge">BL</div>
+      <div>
+        <div class="login-title">BUGABOO <span style="color:var(--g3)">LANDSCAPING</span></div>
+        <div class="login-sub">Quote Builder — Sign In</div>
+      </div>
+    </div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="li-user" autocomplete="username" placeholder="username" onkeydown="if(event.key==='Enter')document.getElementById('li-pass').focus()">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="li-pass" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">SIGN IN</button>
+    <div class="login-err" id="li-err"></div>
+  </div>
+</div>
+
 <script>
+
+// ── AUTH / LOGIN ──────────────────────────────────────────────────────────────
+const USERS = {
+  'admin':  {password:'bugaboo2026', role:'admin'},
+  'office': {password:'view2026',    role:'viewer'},
+};
+let currentRole = null;  // 'admin' | 'viewer' — set after login
+
+function checkLogin(){
+  const sess = sessionStorage.getItem('bq_session');
+  if(sess){
+    try{
+      const d = JSON.parse(sess);
+      if(d && d.role){
+        currentRole = d.role;
+        hideLoginScreen();
+        updateLoginBadge(d.user, d.role);
+        return true;
+      }
+    }catch{}
+  }
+  showLoginScreen();
+  return false;
+}
+
+function showLoginScreen(){
+  const ol = document.getElementById('login-overlay');
+  if(ol) ol.style.display='flex';
+  setTimeout(()=>{ const u=document.getElementById('li-user'); if(u)u.focus(); }, 100);
+}
+
+function hideLoginScreen(){
+  const ol = document.getElementById('login-overlay');
+  if(ol) ol.style.display='none';
+}
+
+function doLogin(){
+  const user = (document.getElementById('li-user').value||'').trim().toLowerCase();
+  const pass = (document.getElementById('li-pass').value||'').trim();
+  const err  = document.getElementById('li-err');
+  const rec  = USERS[user];
+  if(!rec || rec.password !== pass){
+    if(err) err.textContent = 'Invalid username or password.';
+    const inp = document.getElementById('li-pass');
+    if(inp){ inp.value=''; inp.focus(); }
+    return;
+  }
+  // Valid — create session
+  sessionStorage.setItem('bq_session', JSON.stringify({user, role: rec.role}));
+  currentRole = rec.role;
+  hideLoginScreen();
+  updateLoginBadge(user, rec.role);
+  toast('Welcome, '+user+' ('+(rec.role==='admin'?'Admin':'Viewer')+')');
+}
+
+function logout(){
+  sessionStorage.removeItem('bq_session');
+  currentRole = null;
+  // Clear sensitive UI
+  renderSaved();
+  showLoginScreen();
+  document.getElementById('li-pass').value='';
+  document.getElementById('li-err').textContent='';
+}
+
+function updateLoginBadge(user, role){
+  // Inject user badge + logout button into the sidebar header
+  const hdr = document.getElementById('sync-badge');
+  if(hdr){
+    hdr.innerHTML = '<span class="role-badge">'+(role==='admin'?'Admin':'Viewer')+'</span>'
+      + '<button class="logout-btn" onclick="logout()">Sign Out</button>';
+    hdr.style.color='';
+  }
+}
+
+function isAdmin(){ return currentRole === 'admin'; }
+// ── END AUTH ──────────────────────────────────────────────────────────────────
+
+
+// ── DELETE CONFIRMATION MODAL ────────────────────────────────────────────────
+function showDeleteModal(id){
+  const q = saved.find(x=>x.id===id);
+  if(!q) return;
+  const overlay = document.getElementById('del-modal');
+  if(!overlay) return;
+  const clientName = q.client || 'this quote';
+  overlay.style.display = 'flex';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">&#x26A0; Delete Quote?</div>
+      <div class="modal-msg">Delete the quote for <strong style="color:var(--wht)">${clientName}</strong>?<br>This cannot be undone.</div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeDeleteModal()">Cancel</button>
+        <button class="modal-confirm" onclick="closeDeleteModal();delQ('${id}')">&#x2715; Delete</button>
+      </div>
+    </div>`;
+  // Close on backdrop click
+  overlay.onclick = e => { if(e.target===overlay) closeDeleteModal(); };
+}
+
+function closeDeleteModal(){
+  const overlay = document.getElementById('del-modal');
+  if(overlay){ overlay.style.display='none'; overlay.innerHTML=''; }
+}
+// ── END DELETE MODAL ─────────────────────────────────────────────────────────
+
 const SK='bq_v7';
 const SB_URL='https://apeoqinohcftnogjeakt.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwZW9xaW5vaGNmdG5vZ2plYWt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjg3ODEsImV4cCI6MjA4OTkwNDc4MX0.xoNwaVpb-ksSTbTlREF5crRRcCGh9PezTAzJfKZdFKA';
@@ -833,55 +995,146 @@ async function exportExcel(){
   
   if(btn){btn.textContent='\uD83D\uDCCA Excel';btn.style.opacity='';}
 }
-function exportLocal(){
-  if(!CQ) return;
-  try{
-    const bin=atob(TB64),bytes=new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
-    const wb=XLSX.read(bytes,{type:'array',cellStyles:true});
-    function sc(sn,addr,val){
-      if(!wb.Sheets[sn]) return;
-      const ws=wb.Sheets[sn];
-      const ex=ws[addr]||{};
-      ws[addr]={...ex,v:val,t:(typeof val==='number')?'n':'s'};
-      delete ws[addr].f;
+// ── EXCEL EXPORT HELPERS ─────────────────────────────────────────────────────
+// Resolve a sheet name from the workbook, using fuzzy keyword match as fallback.
+// This handles cases where the template's actual sheet names differ slightly
+// from the expected names (e.g. no emoji, different capitalisation).
+function resolveSheetName(wb, keywords){
+  const names = wb.SheetNames || [];
+  // Exact match first
+  for(const kw of keywords){
+    if(names.includes(kw)) return kw;
+  }
+  // Fuzzy: find a sheet whose name contains any keyword (case-insensitive, stripped)
+  const strip = s => s.toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
+  for(const sn of names){
+    const sStripped = strip(sn);
+    for(const kw of keywords){
+      if(sStripped.includes(strip(kw))) return sn;
     }
-    const TO='\uD83D\uDCCA Takeoff & Quote',DB='\uD83D\uDCCB Dashboard',CQ2='\uD83D\uDCC4 Customer Quote';
-    const fv=v=>parseFloat(v)||0,ph=S.ph;
-    const proj=S.client+(S.service?' \u2014 '+S.service:'');
-    sc(DB,'C3',proj);sc(DB,'C4',S.site||'');sc(DB,'C5',S.client||'');sc(DB,'C8',S.operator||'');
-    if(S.notes)sc(DB,'C24',S.notes);
-    sc(TO,'C2',S.client||'');sc(TO,'H2',proj);sc(TO,'C3',S.site||'');
-    sc(TO,'H3',S.operator||'');sc(TO,'H4',CQ.date||'');sc(TO,'H5',CQ.quoteNum||'');
-    if(S.notes)sc(TO,'C6',S.notes);
-    sc(TO,'C8',fv(S.markup)/100);sc(TO,'E8',fv(S.costRate));sc(TO,'P8',fv(S.billRate));
-    sc(TO,'G8',fv(ph.mob?.machRate)||145);sc(TO,'K8',fv(ph.mob?.dumpRate)||80);
-    sc(TO,'M8',fv(ph.mob?.delRate)||120);sc(TO,'O8',(fv(S.targetMargin)||35)/100);
-    if(fv(ph.demo?.labHrs)) sc(TO,'H11',fv(ph.demo.labHrs));
-    if(fv(ph.demo?.dumpQty)){sc(TO,'E14',fv(ph.demo.dumpQty));sc(TO,'F14',fv(ph.demo.dumpRate)||80);}
-    if(fv(ph.grade?.labHrs)) sc(TO,'H18',fv(ph.grade.labHrs));
-    if(fv(ph.irrig?.labHrs)) sc(TO,'H25',fv(ph.irrig.labHrs));
-    if(fv(ph.irrig?.matCost)){sc(TO,'C25','Irrigation materials');sc(TO,'E25',1);sc(TO,'F25',fv(ph.irrig.matCost));}
-    if(fv(ph.hard?.labHrs)) sc(TO,'H32',fv(ph.hard.labHrs));
-    if(fv(ph.hard?.machHrs)) sc(TO,'J32',fv(ph.hard.machHrs));
-    (ph.hard?.lines||[]).forEach((l,i)=>{const r=32+i;if(r>37||!fv(l.qty))return;sc(TO,'C'+r,l.desc||'');sc(TO,'D'+r,l.unit||'sqft');sc(TO,'E'+r,fv(l.qty));sc(TO,'F'+r,fv(l.cu));});
-    if(fv(ph.soft?.labHrs)) sc(TO,'H41',fv(ph.soft.labHrs));
+  }
+  return null; // not found
+}
+
+// Write a value to a cell, preserving existing style and NOT clobbering formulas
+// Pass force=true to overwrite even formula cells
+function scWrite(wb, sheetRef, addr, val, force){
+  if(!sheetRef){ return; }
+  const ws = typeof sheetRef === 'string' ? wb.Sheets[sheetRef] : sheetRef;
+  if(!ws) return;
+  const ex = ws[addr] || {};
+  // Preserve formulas unless force=true
+  if(ex.f && !force) return;
+  ws[addr] = {...ex, v: val, t: (typeof val === 'number') ? 'n' : 's'};
+  if(ws[addr].f) delete ws[addr].f; // remove formula so value takes effect
+}
+
+// Populate the workbook from current quote state, returns filename
+function fillWorkbook(wb){
+  // Resolve sheet names (supports templates with or without emoji prefixes)
+  const sTO = resolveSheetName(wb, ['Takeoff & Quote','Takeoff','Quote','takeoff']);
+  const sDB = resolveSheetName(wb, ['Dashboard','dashboard','DB']);
+  const sCQ = resolveSheetName(wb, ['Customer Quote','Customer','Quote','client']);
+
+  // Log what we found so you can debug if names are wrong
+  console.log('[Export] Sheets found:', wb.SheetNames);
+  console.log('[Export] Mapped: Takeoff='+sTO+', Dashboard='+sDB+', Customer='+sCQ);
+
+  const sc = (sn, addr, val, force) => scWrite(wb, sn, addr, val, force);
+  const fv = v => parseFloat(v)||0, ph = S.ph;
+  const proj = S.client + (S.service ? ' — ' + S.service : '');
+
+  // ── Dashboard sheet ────────────────────────────────────────────────────────
+  if(sDB){
+    sc(sDB,'C3',proj,true); sc(sDB,'C4',S.site||'',true); sc(sDB,'C5',S.client||'',true);
+    sc(sDB,'C8',S.operator||'',true);
+    if(S.notes) sc(sDB,'C24',S.notes,true);
+  }
+
+  // ── Takeoff & Quote sheet ──────────────────────────────────────────────────
+  if(sTO){
+    sc(sTO,'C2',S.client||'',true); sc(sTO,'H2',proj,true); sc(sTO,'C3',S.site||'',true);
+    sc(sTO,'H3',S.operator||'',true); sc(sTO,'H4',CQ.date||'',true); sc(sTO,'H5',CQ.quoteNum||'',true);
+    if(S.notes) sc(sTO,'C6',S.notes,true);
+    // Rates & settings — write as numbers so template formulas can use them
+    sc(sTO,'C8',fv(S.markup)/100,true); sc(sTO,'E8',fv(S.costRate),true); sc(sTO,'P8',fv(S.billRate),true);
+    sc(sTO,'G8',fv(ph.mob?.machRate)||145,true); sc(sTO,'K8',fv(ph.mob?.dumpRate)||80,true);
+    sc(sTO,'M8',fv(ph.mob?.delRate)||120,true); sc(sTO,'O8',(fv(S.targetMargin)||35)/100,true);
+    // Demo
+    if(fv(ph.demo?.labHrs)) sc(sTO,'H11',fv(ph.demo.labHrs),true);
+    if(fv(ph.demo?.dumpQty)){ sc(sTO,'E14',fv(ph.demo.dumpQty),true); sc(sTO,'F14',fv(ph.demo.dumpRate)||80,true); }
+    // Grade
+    if(fv(ph.grade?.labHrs)) sc(sTO,'H18',fv(ph.grade.labHrs),true);
+    // Irrigation
+    if(fv(ph.irrig?.labHrs)) sc(sTO,'H25',fv(ph.irrig.labHrs),true);
+    if(fv(ph.irrig?.matCost)){ sc(sTO,'C25','Irrigation materials',true); sc(sTO,'E25',1,true); sc(sTO,'F25',fv(ph.irrig.matCost),true); }
+    // Hardscape
+    if(fv(ph.hard?.labHrs)) sc(sTO,'H32',fv(ph.hard.labHrs),true);
+    if(fv(ph.hard?.machHrs)) sc(sTO,'J32',fv(ph.hard.machHrs),true);
+    (ph.hard?.lines||[]).forEach((l,i)=>{ const r=32+i; if(r>37||!fv(l.qty))return; sc(sTO,'C'+r,l.desc||'',true); sc(sTO,'D'+r,l.unit||'sqft',true); sc(sTO,'E'+r,fv(l.qty),true); sc(sTO,'F'+r,fv(l.cu),true); });
+    // Softscape + extra materials (shared rows 41-45)
+    if(fv(ph.soft?.labHrs)) sc(sTO,'H41',fv(ph.soft.labHrs),true);
     let ns=41;
-    (ph.soft?.lines||[]).forEach((l,i)=>{const r=41+i;if(r>45||!fv(l.qty))return;sc(TO,'C'+r,l.desc||'');sc(TO,'D'+r,l.unit||'sqft');sc(TO,'E'+r,fv(l.qty));sc(TO,'F'+r,fv(l.cu));ns=r+1;});
-    (S.xMats||[]).forEach(m=>{if(ns>45||!fv(m.qty))return;sc(TO,'C'+ns,m.type||'');sc(TO,'D'+ns,m.unit||'yards');sc(TO,'E'+ns,fv(m.qty));sc(TO,'F'+ns,fv(m.cost));ns++;});
-    if(fv(ph.stru?.labHrs)) sc(TO,'H49',fv(ph.stru.labHrs));
-    (ph.stru?.lines||[]).forEach((l,i)=>{const r=49+i;if(r>52||!fv(l.qty))return;sc(TO,'C'+r,l.desc||'');sc(TO,'D'+r,l.unit||'each');sc(TO,'E'+r,fv(l.qty));sc(TO,'F'+r,fv(l.cu));});
+    (ph.soft?.lines||[]).forEach((l,i)=>{ const r=41+i; if(r>45||!fv(l.qty))return; sc(sTO,'C'+r,l.desc||'',true); sc(sTO,'D'+r,l.unit||'sqft',true); sc(sTO,'E'+r,fv(l.qty),true); sc(sTO,'F'+r,fv(l.cu),true); ns=r+1; });
+    (S.xMats||[]).forEach(m=>{ if(ns>45||!fv(m.qty))return; sc(sTO,'C'+ns,m.type||'',true); sc(sTO,'D'+ns,m.unit||'yards',true); sc(sTO,'E'+ns,fv(m.qty),true); sc(sTO,'F'+ns,fv(m.cost),true); ns++; });
+    // Structures
+    if(fv(ph.stru?.labHrs)) sc(sTO,'H49',fv(ph.stru.labHrs),true);
+    (ph.stru?.lines||[]).forEach((l,i)=>{ const r=49+i; if(r>52||!fv(l.qty))return; sc(sTO,'C'+r,l.desc||'',true); sc(sTO,'D'+r,l.unit||'each',true); sc(sTO,'E'+r,fv(l.qty),true); sc(sTO,'F'+r,fv(l.cu),true); });
+    // Mobilization
     const mob=ph.mob||{};
-    if(fv(mob.machHrs)) sc(TO,'J56',fv(mob.machHrs));
-    if(fv(mob.fuelLoads)){sc(TO,'E57',fv(mob.fuelLoads));sc(TO,'F57',fv(mob.fuelRate)||45);}
-    if(fv(mob.dumpQty)){sc(TO,'E58',fv(mob.dumpQty));sc(TO,'F58',fv(mob.dumpRate)||80);}
-    if(fv(mob.delQty)){sc(TO,'E59',fv(mob.delQty));sc(TO,'F59',fv(mob.delRate)||120);}
-    if(fv(mob.permits)) sc(TO,'L60',fv(mob.permits));
-    if(fv(mob.contHrs)) sc(TO,'H61',fv(mob.contHrs));
-    sc(CQ2,'E5',CQ.quoteNum||'');sc(CQ2,'E6',CQ.date||'');
-    const safe=(S.client||'Quote').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/ +/g,'-');
-    XLSX.writeFile(wb,'Bugaboo-'+safe+'-'+new Date().toISOString().slice(0,10)+'.xlsx');
-  }catch(e){toast('Export failed: '+e.message.slice(0,60),4000);}
+    if(fv(mob.machHrs)) sc(sTO,'J56',fv(mob.machHrs),true);
+    if(fv(mob.fuelLoads)){ sc(sTO,'E57',fv(mob.fuelLoads),true); sc(sTO,'F57',fv(mob.fuelRate)||45,true); }
+    if(fv(mob.dumpQty)){ sc(sTO,'E58',fv(mob.dumpQty),true); sc(sTO,'F58',fv(mob.dumpRate)||80,true); }
+    if(fv(mob.delQty)){ sc(sTO,'E59',fv(mob.delQty),true); sc(sTO,'F59',fv(mob.delRate)||120,true); }
+    if(fv(mob.permits)) sc(sTO,'L60',fv(mob.permits),true);
+    if(fv(mob.contHrs)) sc(sTO,'H61',fv(mob.contHrs),true);
+  }
+
+  // ── Customer Quote sheet ───────────────────────────────────────────────────
+  if(sCQ){
+    sc(sCQ,'E5',CQ.quoteNum||'',true); sc(sCQ,'E6',CQ.date||'',true);
+    sc(sCQ,'B8',S.client||'',true); sc(sCQ,'B9',S.site||'',true);
+  }
+
+  const safe=(S.client||'Quote').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/ +/g,'-');
+  return 'Bugaboo-'+safe+'-'+new Date().toISOString().slice(0,10)+'.xlsx';
+}
+
+async function exportLocal(){
+  if(!CQ) return;
+  // Try 1: Fetch the template file from the same directory (Netlify will serve it)
+  let wb = null;
+  try{
+    const resp = await fetch('./Construction_Takeoff_2026_Template.xlsx', {cache:'no-store'});
+    if(resp.ok){
+      const buf = await resp.arrayBuffer();
+      wb = XLSX.read(new Uint8Array(buf), {type:'array', cellStyles:true, bookVBA:true});
+      console.log('[Export] Loaded template from file ✓');
+    }
+  }catch(e){ console.warn('[Export] Could not fetch template file:',e.message); }
+
+  // Try 2: Fall back to embedded base64 template
+  if(!wb){
+    try{
+      const bin=atob(TB64), bytes=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      wb = XLSX.read(bytes, {type:'array', cellStyles:true, bookVBA:true});
+      console.log('[Export] Using embedded base64 template ✓');
+    }catch(e2){
+      toast('Export failed: could not load template. '+e2.message.slice(0,60), 5000);
+      return;
+    }
+  }
+
+  try{
+    const filename = fillWorkbook(wb);
+    // Write with style preservation
+    XLSX.writeFile(wb, filename, {bookSST:false, cellStyles:true, type:'binary'});
+    toast('\uD83D\uDCCA Spreadsheet downloaded ✓');
+  }catch(e){
+    toast('Export failed: '+e.message.slice(0,60), 4000);
+    console.error('[Export] Write error:',e);
+  }
 }
 function setStat(id,s){
   if(CQ&&CQ.id===id){CQ.status=s;renderQuote(CQ);}
@@ -994,7 +1247,7 @@ function renderSaved(){
   const ct=STATS.reduce((a,s)=>{a[s.k]=saved.filter(q=>q.status===s.k).length;return a;},{});
   $('filter-bar').innerHTML=`<button class="fch${filt==='all'?' on':''}" onclick="setF('all')">All <span class="fcc">${saved.length}</span></button>`+STATS.map(s=>`<button class="fch${filt===s.k?' on':''}" onclick="setF('${s.k}')">${s.l} <span class="fcc">${ct[s.k]||0}</span></button>`).join('');
   const list=filt==='all'?saved:saved.filter(q=>q.status===filt);
-  $('saved-list').innerHTML=list.length?list.map(q=>`<div class="si ${q.status||'draft'}" onclick="loadQ('${q.id}')"><div style="flex:1;min-width:0"><div class="sn">${q.client} \u2014 ${q.service}</div><div class="sm">${q.quoteNum} \u00B7 ${q.date}${q.notes?' \uD83D\uDCDD':''}</div></div><div class="sir"><div class="sdots" onclick="event.stopPropagation()">${STATS.map(s=>`<div class="sdot${q.status===s.k?' on':''}" style="background:${s.c}" title="${s.l}" onclick="setStat('${q.id}','${s.k}');event.stopPropagation()"></div>`).join('')}</div><div class="stot">$${fmt(q.nums.total)}</div><div style="display:flex;gap:3px" onclick="event.stopPropagation()"><button class="sib" onclick="dupeQ('${q.id}')">Dupe</button><button class="sib del" onclick="delQ('${q.id}')">&#x2715;</button></div></div></div>`).join(''):`<div style="color:var(--mut);font-size:11px;padding:5px 0">No ${filt} quotes.</div>`;
+  $('saved-list').innerHTML=list.length?list.map(q=>`<div class="si ${q.status||'draft'}" onclick="loadQ('${q.id}')"><div style="flex:1;min-width:0"><div class="sn">${q.client} \u2014 ${q.service}</div><div class="sm">${q.quoteNum} \u00B7 ${q.date}${q.notes?' \uD83D\uDCDD':''}</div></div><div class="sir"><div class="sdots" onclick="event.stopPropagation()">${STATS.map(s=>`<div class="sdot${q.status===s.k?' on':''}" style="background:${s.c}" title="${s.l}" onclick="setStat('${q.id}','${s.k}');event.stopPropagation()"></div>`).join('')}</div><div class="stot">$${fmt(q.nums.total)}</div><div style="display:flex;gap:3px" onclick="event.stopPropagation()"><button class="sib" onclick="dupeQ('${q.id}')">Dupe</button>${isAdmin()?`<button class="sib del" onclick="showDeleteModal('${q.id}')">&#x2715;</button>`:''}</div></div></div>`).join(''):`<div style="color:var(--mut);font-size:11px;padding:5px 0">No ${filt} quotes.</div>`;
 }
 function setF(f){filt=f;renderSaved();}
 async function refreshAndSync(){
@@ -1100,27 +1353,55 @@ document.addEventListener('click',e=>{
     showPanel('quote');
   }
 });
-renderForm();
-renderAnalytics();
-renderSaved();
-// Show saved section with loading indicator immediately
-(function(){
-  const ss=$('saved-sec'), sl=$('saved-list');
-  if(ss) ss.style.display='block';
-  if(sl&&!saved.length) sl.innerHTML='<div style="color:var(--mut);font-size:11px;padding:8px 0">&#x21BB; Loading quotes from server…</div>';
-})();
-// Load from Supabase on startup
-loadFromSupabase();
-// Poll every 30s for real-time updates (so office can see field quotes live)
-setInterval(()=>{
-  loadFromSupabase(true); // silent=true, no toast
-}, 30000);
-if(window.innerWidth<=860){
-  const sb=$('sidebar'),mp=$('qp-wrap');
-  sb.classList.remove('mob-show');
-  if(mp) mp.style.display='';
-  document.querySelectorAll('.mnb').forEach(b=>b.classList.remove('on'));
-  $('mnb-quote').classList.add('on');
+// ── APP STARTUP ─────────────────────────────────────────────────────────────
+// Show login screen first; only boot the app once authenticated.
+// checkLogin() returns true if a valid session already exists.
+function bootApp(){
+  renderForm();
+  renderAnalytics();
+  renderSaved();
+  // Show saved section with loading indicator immediately
+  (function(){
+    const ss=$('saved-sec'), sl=$('saved-list');
+    if(ss) ss.style.display='block';
+    if(sl&&!saved.length) sl.innerHTML='<div style="color:var(--mut);font-size:11px;padding:8px 0">&#x21BB; Loading quotes from server…</div>';
+  })();
+  // Load from Supabase on startup
+  loadFromSupabase();
+  // Poll every 30s for real-time updates
+  setInterval(()=>{ loadFromSupabase(true); }, 30000);
+  if(window.innerWidth<=860){
+    const sb=$('sidebar'),mp=$('qp-wrap');
+    sb.classList.remove('mob-show');
+    if(mp) mp.style.display='';
+    document.querySelectorAll('.mnb').forEach(b=>b.classList.remove('on'));
+    $('mnb-quote').classList.add('on');
+  }
+}
+// Check session — bootApp is called after successful login or if session exists
+if(checkLogin()){
+  bootApp();
+} else {
+  // doLogin() calls bootApp via logout flow; we hook doLogin to also call bootApp
+  const _origDoLogin = doLogin;
+  window.doLogin = function(){
+    const user = (document.getElementById('li-user').value||'').trim().toLowerCase();
+    const pass = (document.getElementById('li-pass').value||'').trim();
+    const err  = document.getElementById('li-err');
+    const rec  = USERS[user];
+    if(!rec || rec.password !== pass){
+      if(err) err.textContent = 'Invalid username or password.';
+      const inp = document.getElementById('li-pass');
+      if(inp){ inp.value=''; inp.focus(); }
+      return;
+    }
+    sessionStorage.setItem('bq_session', JSON.stringify({user, role: rec.role}));
+    currentRole = rec.role;
+    hideLoginScreen();
+    updateLoginBadge(user, rec.role);
+    toast('Welcome, '+user+' ('+(rec.role==='admin'?'Admin':'Viewer')+')');
+    bootApp();
+  };
 }
 </script>
 </body>
