@@ -3,4 +3,7 @@
   functions = "netlify/functions"
 
 [functions]
-  node_bundler = "esbuild"
+  node_bundler = "nft"
+
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
