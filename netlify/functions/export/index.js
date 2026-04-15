@@ -958,49 +958,13 @@ async function exportExcel(){
   const safe=(S.client||'Quote').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/ +/g,'-');
   const filename='Bugaboo-'+safe+'-'+new Date().toISOString().slice(0,10)+'.xlsx';
 
-  // Try Netlify function — fills template while preserving all styles/colours
-  let usedServer=false;
+  // JSZip surgical export — patches template XML directly, preserving all styles/colours
   try{
-    const ctrl=new AbortController();
-    const timer=setTimeout(()=>ctrl.abort(),20000);
-    const res=await fetch('/.netlify/functions/export',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({snap:S,quoteNum:CQ.quoteNum,date:CQ.date}),
-      signal:ctrl.signal
-    });
-    clearTimeout(timer);
-    if(res.ok){
-      const data=await res.json();
-      if(data.file){
-        const bytes=Uint8Array.from(atob(data.file),c=>c.charCodeAt(0));
-        const blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');a.href=url;a.download=filename;a.click();
-        URL.revokeObjectURL(url);
-        toast('\uD83D\uDCCA Styled spreadsheet downloaded \u2713');
-        usedServer=true;
-      } else if(data.error){
-        console.warn('[Export] Function returned error:',data.error);
-        toast('\u26A0\uFE0F Export issue: '+data.error.slice(0,80),5000);
-      }
-    } else {
-      const t=await res.text().catch(()=>'');
-      console.warn('[Export] Function HTTP',res.status,t.slice(0,100));
-    }
+    await exportTemplated();
+    toast('\uD83D\uDCCA Styled spreadsheet downloaded \u2713');
   }catch(err){
-    console.warn('[Export] Function unavailable:',err.message);
-  }
-
-  // Fallback: JSZip surgical export — patches template XML directly, preserving all styles/colours
-  if(!usedServer){
-    try{
-      await exportTemplated();
-      toast('\uD83D\uDCCA Styled spreadsheet downloaded \u2713');
-    }catch(err2){
-      console.error('[Export] JSZip export failed:',err2);
-      toast('\u26A0\uFE0F Export failed: '+err2.message.slice(0,80),5000);
-    }
+    console.error('[Export] JSZip export failed:',err);
+    toast('\u26A0\uFE0F Export failed: '+err.message.slice(0,80),5000);
   }
 
   if(btn){btn.textContent='\uD83D\uDCCA Excel';btn.style.opacity='';}
