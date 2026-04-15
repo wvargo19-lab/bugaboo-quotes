@@ -1299,23 +1299,16 @@ async function delQ(id){
     $('quote-out').innerHTML='<div class="empty"><div style="font-size:38px;opacity:.2;margin-bottom:12px">&#x1F4CB;</div><div class="et">No Quote Yet</div><div class="es">Fill in the form and generate.</div></div>';
     $('q-actions').style.display='none';
   }
-  // Delete from Supabase — even if this fails, the blocklist above prevents reappearance
+  // Soft-delete in Supabase: sync with _deleted flag instead of trying a hard DELETE.
+  // Hard DELETE requires RLS permissions that the anon key doesn't have — it returns
+  // 200 OK but deletes nothing, so quotes come back on any reload or new device.
+  // Soft-delete uses the same INSERT path that already works for all users.
   try{
-    const res=await fetch(SB_URL+'/rest/v1/Quotes?quote_num=eq.'+encodeURIComponent(q.quoteNum),{
-      method:'DELETE',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}
-    });
-    if(res.ok){
-      toast('Quote deleted');
-    } else {
-      const e=await res.text();
-      throw new Error(res.status+': '+e.slice(0,100));
-    }
+    await syncToSupabase({...q, _deleted:true});
+    toast('Quote deleted');
   }catch(err){
-    // Even if Supabase delete fails, the local blocklist keeps it gone from the UI.
-    // It will be cleaned up from Supabase next time the connection is stable.
-    toast('Deleted locally ✓ (will sync when back online)', 4000);
-    console.warn('Supabase delete failed:',err.message);
+    toast('Deleted locally \u2713 (will sync when back online)', 4000);
+    console.warn('Supabase soft-delete failed:',err.message);
   }
 }
 function copyQ(){if(!CQ)return;const n=CQ.nums;navigator.clipboard.writeText(`BUGABOO LANDSCAPING\nQuote #${CQ.quoteNum} \u2014 ${CQ.date}\n\nClient: ${CQ.client}\nSite: ${CQ.site||'\u2014'}\nOperator: ${CQ.operator||'\u2014'}\nService: ${CQ.service}\n\nSubtotal: $${fmt(n.sub)}\nGST (5%): $${fmt(n.gst)}\nTOTAL: $${fmt(n.total)} CAD`).then(()=>toast('Copied!')).catch(()=>toast('Copy failed'));}
@@ -1386,10 +1379,16 @@ async function loadFromSupabase(silent=false){
         seen.set(q.quoteNum, {...q, dbId: r.id});
       }
     });
-    // Filter out any quotes the user has deliberately deleted (blocklist)
+    // Sync local blocklist with any soft-deleted quotes found in Supabase
+    // (catches deletions made on a different browser/device)
+    Array.from(seen.values()).forEach(q=>{
+      if(q._deleted) deletedNums.add(q.quoteNum);
+    });
+    persistDeleted();
+    // Filter out soft-deleted and locally-blocked quotes
     const remoteQuotes = Array.from(seen.values())
       .map(q=>{ delete q.dbId; return q; })
-      .filter(q=>!deletedNums.has(q.quoteNum));
+      .filter(q=>!deletedNums.has(q.quoteNum) && !q._deleted);
     // Merge: remote wins over local for same quoteNum
     const merged = [...remoteQuotes];
     // Add any local-only quotes not yet synced (skip deleted ones)
