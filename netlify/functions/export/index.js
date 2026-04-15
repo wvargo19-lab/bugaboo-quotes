@@ -1375,21 +1375,19 @@ document.addEventListener('click',e=>{
   }
 });
 // ── APP STARTUP ─────────────────────────────────────────────────────────────
-// Show login screen first; only boot the app once authenticated.
-// checkLogin() returns true if a valid session already exists.
+let _appBooted = false;
 function bootApp(){
+  if(_appBooted) return; // prevent double-boot
+  _appBooted = true;
   renderForm();
   renderAnalytics();
   renderSaved();
-  // Show saved section with loading indicator immediately
   (function(){
     const ss=$('saved-sec'), sl=$('saved-list');
     if(ss) ss.style.display='block';
     if(sl&&!saved.length) sl.innerHTML='<div style="color:var(--mut);font-size:11px;padding:8px 0">&#x21BB; Loading quotes from server…</div>';
   })();
-  // Load from Supabase on startup
   loadFromSupabase();
-  // Poll every 30s for real-time updates
   setInterval(()=>{ loadFromSupabase(true); }, 30000);
   if(window.innerWidth<=860){
     const sb=$('sidebar'),mp=$('qp-wrap');
@@ -1399,31 +1397,29 @@ function bootApp(){
     $('mnb-quote').classList.add('on');
   }
 }
-// Check session — bootApp is called after successful login or if session exists
-if(checkLogin()){
+// Replace doLogin globally so it always calls bootApp — covers fresh login,
+// re-login after logout, and sessions that existed on page load.
+window.doLogin = function(){
+  const user=(document.getElementById('li-user').value||'').trim().toLowerCase();
+  const pass=(document.getElementById('li-pass').value||'').trim();
+  const err=document.getElementById('li-err');
+  const rec=USERS[user];
+  if(!rec||rec.password!==pass){
+    if(err) err.textContent='Invalid username or password.';
+    const inp=document.getElementById('li-pass');
+    if(inp){inp.value='';inp.focus();}
+    return;
+  }
+  sessionStorage.setItem('bq_session',JSON.stringify({user,role:rec.role}));
+  currentRole=rec.role;
+  hideLoginScreen();
+  updateLoginBadge(user,rec.role);
+  toast('Welcome, '+user+' ('+(rec.role==='admin'?'Admin':'Viewer')+')');
+  _appBooted=false; // allow re-boot after logout+login
   bootApp();
-} else {
-  // doLogin() calls bootApp via logout flow; we hook doLogin to also call bootApp
-  const _origDoLogin = doLogin;
-  window.doLogin = function(){
-    const user = (document.getElementById('li-user').value||'').trim().toLowerCase();
-    const pass = (document.getElementById('li-pass').value||'').trim();
-    const err  = document.getElementById('li-err');
-    const rec  = USERS[user];
-    if(!rec || rec.password !== pass){
-      if(err) err.textContent = 'Invalid username or password.';
-      const inp = document.getElementById('li-pass');
-      if(inp){ inp.value=''; inp.focus(); }
-      return;
-    }
-    sessionStorage.setItem('bq_session', JSON.stringify({user, role: rec.role}));
-    currentRole = rec.role;
-    hideLoginScreen();
-    updateLoginBadge(user, rec.role);
-    toast('Welcome, '+user+' ('+(rec.role==='admin'?'Admin':'Viewer')+')');
-    bootApp();
-  };
-}
+};
+// Boot immediately if session already exists
+if(checkLogin()) bootApp();
 </script>
 </body>
 </html>
