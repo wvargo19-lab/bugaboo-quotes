@@ -992,10 +992,15 @@ async function exportExcel(){
     console.warn('[Export] Function unavailable:',err.message);
   }
 
-  // Fallback: local SheetJS export (data correct, no styling)
+  // Fallback: JSZip surgical export — patches template XML directly, preserving all styles/colours
   if(!usedServer){
-    toast('\uD83D\uDCCA Downloading (no styling — deploy function for full template)',4000);
-    await exportLocal();
+    try{
+      await exportTemplated();
+      toast('\uD83D\uDCCA Styled spreadsheet downloaded \u2713');
+    }catch(err2){
+      console.error('[Export] JSZip export failed:',err2);
+      toast('\u26A0\uFE0F Export failed: '+err2.message.slice(0,80),5000);
+    }
   }
 
   if(btn){btn.textContent='\uD83D\uDCCA Excel';btn.style.opacity='';}
@@ -1105,41 +1110,149 @@ function fillWorkbook(wb){
   return 'Bugaboo-'+safe+'-'+new Date().toISOString().slice(0,10)+'.xlsx';
 }
 
-async function exportLocal(){
-  if(!CQ) return;
-  // Try 1: Fetch the template file from the same directory (Netlify will serve it)
-  let wb = null;
-  try{
-    const resp = await fetch('./Construction_Takeoff_2026_Template.xlsx', {cache:'no-store'});
-    if(resp.ok){
-      const buf = await resp.arrayBuffer();
-      wb = XLSX.read(new Uint8Array(buf), {type:'array', cellStyles:true, bookVBA:true});
-      console.log('[Export] Loaded template from file ✓');
-    }
-  }catch(e){ console.warn('[Export] Could not fetch template file:',e.message); }
+// ── JSZIP SURGICAL XML EXPORT ─────────────────────────────────────────────────
+// Instead of using SheetJS (which strips all cell colours when re-writing), we
+// open the xlsx ZIP directly, make surgical text replacements in the sheet XML,
+// and leave xl/styles.xml completely untouched — so every colour, border, and
+// format in the original template is perfectly preserved in the output.
 
-  // Try 2: Fall back to embedded base64 template
-  if(!wb){
-    try{
-      const bin=atob(TB64), bytes=new Uint8Array(bin.length);
-      for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
-      wb = XLSX.read(bytes, {type:'array', cellStyles:true, bookVBA:true});
-      console.log('[Export] Using embedded base64 template ✓');
-    }catch(e2){
-      toast('Export failed: could not load template. '+e2.message.slice(0,60), 5000);
-      return;
-    }
-  }
+function xmlEsc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-  try{
-    const filename = fillWorkbook(wb);
-    // Write with style preservation
-    XLSX.writeFile(wb, filename, {bookSST:false, cellStyles:true, type:'binary'});
-    toast('\uD83D\uDCCA Spreadsheet downloaded ✓');
-  }catch(e){
-    toast('Export failed: '+e.message.slice(0,60), 4000);
-    console.error('[Export] Write error:',e);
+// Write a string into cell `addr`, keeping whatever style-index `s="N"` is there.
+// Handles both self-closing empty cells <c r="A1" s="N"/> and cells with existing values.
+function setStr(xml, addr, val){
+  const esc=xmlEsc(val);
+  const inline='<is><t>'+esc+'</t></is>';
+  const ap=addr.replace(/[+?^${}()|[\]\\]/g,'\\$&');
+  // Case 1 – self-closing: <c r="ADDR" s="N"/>
+  let out=xml.replace(new RegExp('<c r="'+ap+'"([^/]*)/>'),function(_,attrs){
+    attrs=attrs.replace(/\s+t="[^"]*"/g,'');
+    return '<c r="'+addr+'"'+attrs+' t="inlineStr">'+inline+'</c>';
+  });
+  if(out!==xml) return out;
+  // Case 2 – existing value: <c r="ADDR" [attrs]><v>...</v></c>  or  <is>...</is>
+  out=xml.replace(new RegExp('<c r="'+ap+'"([^>]*)>(?:<v>[^<]*<\\/v>|<is>[\\s\\S]*?<\\/is>)<\\/c>'),function(_,attrs){
+    attrs=attrs.replace(/\s+t="[^"]*"/g,'');
+    return '<c r="'+addr+'"'+attrs+' t="inlineStr">'+inline+'</c>';
+  });
+  return out;
+}
+
+// Write a number into cell `addr`, keeping whatever style-index `s="N"` is there.
+function setNum(xml, addr, val){
+  const n=parseFloat(val)||0;
+  const ap=addr.replace(/[+?^${}()|[\]\\]/g,'\\$&');
+  // Case 1 – self-closing
+  let out=xml.replace(new RegExp('<c r="'+ap+'"([^/]*)/>'),function(_,attrs){
+    return '<c r="'+addr+'"'+attrs+'><v>'+n+'</v></c>';
+  });
+  if(out!==xml) return out;
+  // Case 2 – existing numeric value: replace only the <v>…</v> content
+  out=xml.replace(new RegExp('(<c r="'+ap+'"[^>]*>)<v>[^<]*<\\/v><\\/c>'),function(_,opening){
+    return opening+'<v>'+n+'</v></c>';
+  });
+  return out;
+}
+
+// Main export: unzip template, patch XMLs, re-zip, download — styles fully intact.
+async function exportTemplated(){
+  if(!CQ) return null;
+  // Lazy-load JSZip from CDN (cached after first load)
+  if(!window.JSZip){
+    await new Promise(function(res,rej){
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      s.onload=res; s.onerror=function(){rej(new Error('JSZip CDN load failed'));};
+      document.head.appendChild(s);
+    });
   }
+  // Decode embedded template bytes
+  const bin=atob(TB64), bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  const zip=await JSZip.loadAsync(bytes);
+
+  // Sheet paths in this template: sheet2=Dashboard, sheet3=Takeoff, sheet4=Customer Quote
+  const pS2='xl/worksheets/sheet2.xml', pS3='xl/worksheets/sheet3.xml', pS4='xl/worksheets/sheet4.xml';
+  const fS2=zip.file(pS2), fS3=zip.file(pS3), fS4=zip.file(pS4);
+  if(!fS2||!fS3||!fS4) throw new Error('Template sheet files not found — TB64 may be outdated');
+  let s2=await fS2.async('string');
+  let s3=await fS3.async('string');
+  let s4=await fS4.async('string');
+
+  const fv=v=>parseFloat(v)||0, ph=S.ph||{};
+  const proj=S.client+(S.service?' \u2014 '+S.service:'');
+
+  // ── Dashboard (sheet2) ─────────────────────────────────────────────────────
+  s2=setStr(s2,'C3',proj);
+  s2=setStr(s2,'C4',S.site||'');
+  s2=setStr(s2,'C5',S.client||'');
+  s2=setStr(s2,'C8',S.operator||'');
+  if(S.notes) s2=setStr(s2,'C24',S.notes);
+
+  // ── Takeoff (sheet3) ───────────────────────────────────────────────────────
+  s3=setStr(s3,'C2',S.client||'');
+  s3=setStr(s3,'H2',proj);
+  s3=setStr(s3,'C3',S.site||'');
+  s3=setStr(s3,'H3',S.operator||'');
+  s3=setStr(s3,'H4',CQ.date||'');
+  s3=setStr(s3,'H5',CQ.quoteNum||'');
+  if(S.notes) s3=setStr(s3,'C6',S.notes);
+  s3=setNum(s3,'C8',fv(S.markup)/100);
+  s3=setNum(s3,'E8',fv(S.costRate));
+  s3=setNum(s3,'P8',fv(S.billRate));
+  s3=setNum(s3,'G8',fv(ph.mob?.machRate)||145);
+  s3=setNum(s3,'K8',fv(ph.mob?.dumpRate)||80);
+  s3=setNum(s3,'M8',fv(ph.mob?.delRate)||120);
+  s3=setNum(s3,'O8',(fv(S.targetMargin)||35)/100);
+  // Demo
+  if(fv(ph.demo?.labHrs)) s3=setNum(s3,'H11',fv(ph.demo.labHrs));
+  if(fv(ph.demo?.dumpQty)){s3=setNum(s3,'E14',fv(ph.demo.dumpQty));s3=setNum(s3,'F14',fv(ph.demo.dumpRate)||80);}
+  // Grade
+  if(fv(ph.grade?.labHrs)) s3=setNum(s3,'H18',fv(ph.grade.labHrs));
+  // Irrigation
+  if(fv(ph.irrig?.labHrs)) s3=setNum(s3,'H25',fv(ph.irrig.labHrs));
+  if(fv(ph.irrig?.matCost)){s3=setStr(s3,'C25','Irrigation materials');s3=setNum(s3,'E25',1);s3=setNum(s3,'F25',fv(ph.irrig.matCost));}
+  // Hardscape
+  if(fv(ph.hard?.labHrs)) s3=setNum(s3,'H32',fv(ph.hard.labHrs));
+  if(fv(ph.hard?.machHrs)) s3=setNum(s3,'J32',fv(ph.hard.machHrs));
+  (ph.hard?.lines||[]).forEach(function(l,i){const r=32+i;if(r>37||!fv(l.qty))return;s3=setStr(s3,'C'+r,l.desc||'');s3=setStr(s3,'D'+r,l.unit||'sqft');s3=setNum(s3,'E'+r,fv(l.qty));s3=setNum(s3,'F'+r,fv(l.cu));});
+  // Softscape + extra materials (rows 41-45)
+  if(fv(ph.soft?.labHrs)) s3=setNum(s3,'H41',fv(ph.soft.labHrs));
+  let ns=41;
+  (ph.soft?.lines||[]).forEach(function(l,i){const r=41+i;if(r>45||!fv(l.qty))return;s3=setStr(s3,'C'+r,l.desc||'');s3=setStr(s3,'D'+r,l.unit||'sqft');s3=setNum(s3,'E'+r,fv(l.qty));s3=setNum(s3,'F'+r,fv(l.cu));ns=r+1;});
+  (S.xMats||[]).forEach(function(m){if(ns>45||!fv(m.qty))return;s3=setStr(s3,'C'+ns,m.type||'');s3=setStr(s3,'D'+ns,m.unit||'yards');s3=setNum(s3,'E'+ns,fv(m.qty));s3=setNum(s3,'F'+ns,fv(m.cost));ns++;});
+  // Structures
+  if(fv(ph.stru?.labHrs)) s3=setNum(s3,'H49',fv(ph.stru.labHrs));
+  (ph.stru?.lines||[]).forEach(function(l,i){const r=49+i;if(r>52||!fv(l.qty))return;s3=setStr(s3,'C'+r,l.desc||'');s3=setStr(s3,'D'+r,l.unit||'each');s3=setNum(s3,'E'+r,fv(l.qty));s3=setNum(s3,'F'+r,fv(l.cu));});
+  // Mobilization
+  const mob=ph.mob||{};
+  if(fv(mob.machHrs)) s3=setNum(s3,'J56',fv(mob.machHrs));
+  if(fv(mob.fuelLoads)){s3=setNum(s3,'E57',fv(mob.fuelLoads));s3=setNum(s3,'F57',fv(mob.fuelRate)||45);}
+  if(fv(mob.dumpQty)){s3=setNum(s3,'E58',fv(mob.dumpQty));s3=setNum(s3,'F58',fv(mob.dumpRate)||80);}
+  if(fv(mob.delQty)){s3=setNum(s3,'E59',fv(mob.delQty));s3=setNum(s3,'F59',fv(mob.delRate)||120);}
+  if(fv(mob.permits)) s3=setNum(s3,'L60',fv(mob.permits));
+  if(fv(mob.contHrs)) s3=setNum(s3,'H61',fv(mob.contHrs));
+
+  // ── Customer Quote (sheet4) ────────────────────────────────────────────────
+  s4=setStr(s4,'E5',CQ.quoteNum||'');
+  s4=setStr(s4,'E6',CQ.date||'');
+  s4=setStr(s4,'B8',S.client||'');
+  s4=setStr(s4,'B9',S.site||'');
+
+  // Write patched sheets back into zip (styles.xml is never touched)
+  zip.file(pS2,s2); zip.file(pS3,s3); zip.file(pS4,s4);
+
+  // Generate & download
+  const out=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
+  const blob=new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob);
+  const safe=(S.client||'Quote').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/ +/g,'-');
+  const filename='Bugaboo-'+safe+'-'+new Date().toISOString().slice(0,10)+'.xlsx';
+  const a=document.createElement('a');a.href=url;a.download=filename;a.click();
+  URL.revokeObjectURL(url);
+  return filename;
 }
 function setStat(id,s){
   if(CQ&&CQ.id===id){CQ.status=s;renderQuote(CQ);}
