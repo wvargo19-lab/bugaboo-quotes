@@ -485,8 +485,6 @@ let _tt;
 function toast(msg,dur){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),dur||2800);}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
-const fv=v=>parseFloat(v)||0;
-
 function calcAll(){
   const s=S;
   const cr=fv(s.costRate), br=fv(s.billRate), mk=s.markup/100;
