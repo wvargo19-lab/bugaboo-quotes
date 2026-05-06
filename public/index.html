@@ -478,7 +478,11 @@ function defState(){return{
   delivery:{count:'',ratePerDel:'120'},
   photos:[],
   nid:100,
-};}
+;}}
+let S=defState(),CQ=null,filt='all',saved=[];
+try{saved=JSON.parse(localStorage.getItem(SK))||[];}catch{}
+let _tt;
+function toast(msg,dur){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),dur||2800);}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 const fv=v=>parseFloat(v)||0;
@@ -1076,8 +1080,23 @@ async function deleteFromSupabase(quoteNum){
     console.warn('Supabase delete failed:',err.message);
   }
 }
-function loadQ(id){const q=saved.find(x=>x.id===id);if(!q)return;CQ=q;S=JSON.parse(JSON.stringify(q.snap));S.nid=Date.now();renderForm();renderAnalytics();renderQuote(q);$('q-actions').style.display='flex';if(window.innerWidth<=860)showPanel('quote');}
-function dupeQ(id){const q=saved.find(x=>x.id===id);if(!q)return;const nq={...q,id:uid(),quoteNum:`BL-${new Date().getFullYear()}-${uid()}`,date:today(),status:'draft'};CQ=nq;S=JSON.parse(JSON.stringify(q.snap));S.nid=Date.now();renderForm();renderAnalytics();renderQuote(nq);$('q-actions').style.display='flex';toast('Duplicated!');}
+function migrateSnap(snap){
+  // If snap is old phase-based format, convert to new flat format
+  if(!snap.mats){
+    snap.mats=[{id:1,desc:'',qty:'',unit:'sqft',cu:''}];
+  }
+  if(!snap.labour) snap.labour={hrs:'',crew:'1'};
+  if(!snap.equip) snap.equip={machHrs:'',machRate:'145'};
+  if(!snap.disposal) snap.disposal={loads:'',ratePerLoad:'61'};
+  if(!snap.delivery) snap.delivery={count:'',ratePerDel:'120'};
+  if(!snap.internalNotes) snap.internalNotes='';
+  if(snap.markup===undefined) snap.markup=25;
+  if(snap.gst===undefined) snap.gst=true;
+  if(!snap.targetMargin) snap.targetMargin='35';
+  return snap;
+}
+function loadQ(id){const q=saved.find(x=>x.id===id);if(!q)return;CQ=q;S=migrateSnap(JSON.parse(JSON.stringify(q.snap)));S.nid=Date.now();renderForm();renderAnalytics();renderQuote(q);$('q-actions').style.display='flex';if(window.innerWidth<=860)showPanel('quote');}
+function dupeQ(id){const q=saved.find(x=>x.id===id);if(!q)return;const nq={...q,id:uid(),quoteNum:`BL-${new Date().getFullYear()}-${uid()}`,date:today(),status:'draft'};CQ=nq;S=migrateSnap(JSON.parse(JSON.stringify(q.snap)));S.nid=Date.now();renderForm();renderAnalytics();renderQuote(nq);$('q-actions').style.display='flex';toast('Duplicated!');}
 async function delQ(id){
   const q=saved.find(x=>x.id===id);
   if(!q) return;
