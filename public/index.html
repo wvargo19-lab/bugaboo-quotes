@@ -224,9 +224,9 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 .mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(–obk);border-top:1px solid var(–bdr);z-index:50;padding-bottom:env(safe-area-inset-bottom,0)}
 .mnb{flex:1;padding:12px 6px 10px;border:none;background:transparent;color:var(–mut);font-family:‘DM Sans’,sans-serif;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent}
 .mnb.on{color:var(–g3)}.mnb svg{width:22px;height:22px}
-.sb{width:100%;height:auto;position:static;border-right:none;display:none;flex-shrink:unset;max-width:100%}
-.sb.mob-show{display:flex;flex-direction:column;min-height:calc(100vh - 56px);padding-bottom:72px}
-.qp{width:100%;min-width:0;padding:14px 14px 80px;flex:unset}
+.sb{width:100%;height:auto;position:static;border-right:none;display:none}
+.sb.mob-show{display:flex;flex-direction:column;min-height:100vh;padding-bottom:72px}
+.qp{padding:14px 14px 80px}
 .fld input,.fld select,.fld textarea{font-size:16px !important;padding:10px 12px}
 .r3{grid-template-columns:1fr 1fr}
 .r4{grid-template-columns:1fr 1fr}
@@ -235,14 +235,6 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 .qi{padding:12px 18px}.qb{padding:14px 18px}.qct{padding:16px 18px}
 .tbar{margin:10px -18px -14px;padding:12px 18px}
 .qss{padding:7px 18px}
-}
-/* iPad splitter shows above 600px */
-@media(min-width:601px) and (max-width:860px){
-.app{display:flex}
-.mob-nav{display:none}
-.sb{display:flex !important;width:50%;min-width:260px;max-width:70vw;position:sticky;top:0;height:100vh;border-right:1px solid var(–bdr)}
-.splitter{display:flex}
-.qp{flex:1;min-width:0;padding:16px 18px 24px}
 }
 @media print{
 .sb,.mob-nav,.qph,.qa,.ssec,.toast,.qss,.scards,.mbar,.ctable{display:none !important}
@@ -1067,7 +1059,7 @@ setTimeout(()=>{if(badge)badge.textContent=’’;},4000);
 }
 
 function showPanel(panel){
-if(window.innerWidth>600) return;
+if(window.innerWidth>860) return;
 const sb=$(‘sidebar’),mp=$(‘qp-wrap’);
 document.querySelectorAll(’.mnb’).forEach(b=>b.classList.remove(‘on’));
 if(panel===‘form’){
@@ -1086,7 +1078,7 @@ else window.scrollTo(0,0);
 }
 
 document.addEventListener(‘click’,e=>{
-if(window.innerWidth>600) return;
+if(window.innerWidth>860) return;
 const sb=$(‘sidebar’);
 if(sb.classList.contains(‘mob-show’)&&!sb.contains(e.target)&&!$(‘mnb-form’).contains(e.target)){
 showPanel(‘quote’);
@@ -1124,7 +1116,7 @@ try{ localStorage.setItem(‘bq_sidebar_w’, sb.offsetWidth); }catch{}
 
 // Mouse events (desktop)
 splitter.addEventListener(‘mousedown’, e=>{
-if(window.innerWidth <= 600) return;
+if(window.innerWidth <= 860) return;
 startDrag(e.clientX);
 e.preventDefault();
 });
@@ -1133,7 +1125,7 @@ document.addEventListener(‘mouseup’, endDrag);
 
 // Touch events (iPad & touchscreens)
 splitter.addEventListener(‘touchstart’, e=>{
-if(window.innerWidth <= 600) return;
+if(window.innerWidth <= 860) return;
 startDrag(e.touches[0].clientX);
 e.preventDefault();
 }, {passive:false});
@@ -1147,13 +1139,13 @@ document.addEventListener(‘touchend’, endDrag);
 // Restore saved width
 try{
 const saved = localStorage.getItem(‘bq_sidebar_w’);
-if(saved && window.innerWidth > 600) sb.style.width = saved + ‘px’;
+if(saved && window.innerWidth > 860) sb.style.width = saved + ‘px’;
 }catch{}
 
 // Double-click / double-tap to toggle full width
 let lastTap = 0;
 function toggleWidth(){
-if(window.innerWidth <= 600) return;
+if(window.innerWidth <= 860) return;
 const current = sb.offsetWidth;
 const full = Math.round(window.innerWidth * 0.85);
 sb.style.width = (current > 650 ? 600 : full) + ‘px’;
@@ -1203,7 +1195,7 @@ loadFromSupabase();
 setInterval(()=>{
 loadFromSupabase(true); // silent=true, no toast
 }, 30000);
-if(window.innerWidth<=600){
+if(window.innerWidth<=860){
 const sb=$(‘sidebar’),mp=$(‘qp-wrap’);
 sb.classList.remove(‘mob-show’);
 if(mp) mp.style.display=’’;
