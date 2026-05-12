@@ -18,26 +18,6 @@
 
 
 
-
-/* ── SAVED PANEL ────────────────────────────────────────────────────────── */
-#saved-panel{display:none;flex:1;min-width:0;background:var(--bk);padding:24px 32px;flex-direction:column;min-height:100vh;overflow-y:auto}
-#saved-panel.active{display:flex}
-.saved-panel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px}
-.saved-panel-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--wht)}
-.saved-panel-sub{font-size:11px;color:var(--mut);margin-top:2px}
-.sync-btn{background:transparent;border:1px solid var(--bdr);border-radius:6px;color:var(--mut);font-size:11px;padding:5px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
-.sync-btn:hover{border-color:var(--g3);color:var(--g3)}
-/* Desktop tab switcher in right-panel header area */
-.qp-tabs{display:flex;gap:0;border-bottom:1px solid var(--bdr);margin-bottom:20px}
-.qp-tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;transition:all .15s;margin-bottom:-1px}
-.qp-tab:hover{color:var(--txt)}
-.qp-tab.on{color:var(--g3);border-bottom-color:var(--g3)}
-/* Mobile saved panel full screen */
-@media(max-width:860px),(max-width:1024px) and (orientation:portrait){
-  #saved-panel{padding:14px 16px 90px;min-height:calc(100vh - 64px)}
-  .qp-tabs{display:none}
-}
-
 /* ── CONFIRM DIALOG ─────────────────────────────────────────────────────── */
 #confirm-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px}
 #confirm-modal.open{display:flex}
@@ -271,7 +251,7 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:48px 20px;color:var(--mut);flex:1}
 .et{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin-bottom:7px;color:var(--mut)}
 .es{font-size:12px;max-width:240px;line-height:1.6}
-.notes-area{width:100%;background:var(--card);border:1px solid var(--bdr);border-radius:var(--rad);padding:12px 14px;color:var(--wht);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:vertical;min-height:120px;max-height:400px;transition:border-color .15s}
+.notes-area{width:100%;background:var(--card);border:1px solid var(--bdr);border-radius:var(--rad);padding:10px 12px;color:var(--wht);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:vertical;min-height:120px;max-height:400px;transition:border-color .15s}
 .notes-area:focus{border-color:var(--g3)}
 .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 .photo-thumb{position:relative;aspect-ratio:1;border-radius:var(--rad);overflow:hidden;background:var(--card);border:1px solid var(--bdr);cursor:pointer}
@@ -333,8 +313,6 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
   .qss{padding:7px 16px}
   /* Hide theme button text overflow on small screens */
   #theme-btn{font-size:13px;padding:3px 7px}
-  /* Bigger notes area on mobile */
-  .notes-area{min-height:140px;font-size:16px !important}
 }
 @media print{
   .sb,.mob-nav,.qph,.qa,.ssec,.toast,.qss,.scards,.mbar,.ctable{display:none !important}
@@ -359,10 +337,7 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
   <div class="splitter" id="splitter" title="Drag to resize"></div>
   <main class="qp" id="qp-wrap">
     <div class="qph">
-      <div class="qp-tabs" id="desktop-tabs">
-        <button class="qp-tab on" id="tab-quote" onclick="switchTab('quote')">&#x1F4CB; Quote Builder</button>
-        <button class="qp-tab" id="tab-saved" onclick="switchTab('saved')">&#x1F4BE; Saved Quotes <span id="tab-saved-count" style="font-size:10px;color:var(--mut);font-family:'DM Mono',monospace"></span></button>
-      </div>
+      <div class="qpt">Cost &amp; Quote Builder</div>
       <div class="qa" id="q-actions" style="display:none">
         <button class="acb" onclick="newQuote()">&#x2795; New</button>
         <button class="acb" onclick="copyQ()">&#x1F4CB; Copy</button>
@@ -378,18 +353,15 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
         <div class="es">Fill in the site takeoff on the left. Numbers update live as you type.</div>
       </div>
     </div>
-  </main>
-  <div id="saved-panel">
-    <div class="saved-panel-hd">
-      <div>
-        <div class="saved-panel-title">&#x1F4BE; Saved Quotes</div>
-        <div class="saved-panel-sub" id="saved-panel-sub">All quotes saved in this browser</div>
+    <div class="ssec" id="saved-sec" style="display:none">
+      <div class="saveh" id="saved-head" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Saved Quotes</span>
+        <button onclick="refreshAndSync()" style="background:transparent;border:1px solid var(--bdr);border-radius:5px;color:var(--mut);font-size:10px;padding:3px 9px;cursor:pointer;font-family:'DM Sans',sans-serif" onmouseover="this.style.borderColor='var(--g3)';this.style.color='var(--g3)'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--mut)'">&#x21BB; Refresh</button>
       </div>
-      <button class="sync-btn" onclick="refreshAndSync()">&#x21BB; Sync with Cloud</button>
+      <div class="fbar" id="filter-bar"></div>
+      <div id="saved-list"></div>
     </div>
-    <div class="fbar" id="filter-bar"></div>
-    <div id="saved-list"></div>
-  </div>
+  </main>
 </div>
 <nav class="mob-nav" id="mob-nav">
   <button class="mnb on" id="mnb-form" onclick="showPanel('form')">
@@ -1232,7 +1204,6 @@ async function deleteFromSupabase(quoteNum){
 function loadQ(id){const q=saved.find(x=>x.id===id);if(!q)return;CQ=q;S=JSON.parse(JSON.stringify(q.snap));S.nid=Date.now();renderForm();renderAnalytics();renderQuote(q);$('q-actions').style.display='flex';if(window.innerWidth<=860)showPanel('quote');}
 function dupeQ(id){const q=saved.find(x=>x.id===id);if(!q)return;const nq={...q,id:uid(),quoteNum:`BL-${new Date().getFullYear()}-${uid()}`,date:today(),status:'draft'};CQ=nq;S=JSON.parse(JSON.stringify(q.snap));S.nid=Date.now();renderForm();renderAnalytics();renderQuote(nq);$('q-actions').style.display='flex';toast('Duplicated!');}
 async function delQ(id){
-  if(currentRole !== 'admin'){ toast('Only admins can delete quotes'); return; }
   const q=saved.find(x=>x.id===id);
   if(!q) return;
   const ok = await showConfirm(
@@ -1272,20 +1243,19 @@ function copyQ(){if(!CQ)return;const n=CQ.nums;navigator.clipboard.writeText(`BU
 function renderSaved(){
   const badge=$('saved-badge');
   if(badge){badge.style.display=saved.length?'':'none';badge.textContent=saved.length+' saved';}
-  // Update desktop tab count
-  const tc=$('tab-saved-count');
-  if(tc) tc.textContent = saved.length ? '('+saved.length+')' : '';
-  // Update panel subtitle
-  const sub=$('saved-panel-sub');
-  if(sub) sub.textContent = saved.length ? `${saved.length} quote${saved.length>1?'s':''} saved in this browser` : 'No saved quotes yet';
+  const sec=$('saved-sec');
   if(!saved.length){
-    const sl=$('saved-list'); if(sl) sl.innerHTML='<div class="empty" style="padding:40px 0"><div style="font-size:32px;opacity:.15;margin-bottom:10px">&#x1F4BE;</div><div class="et">No Saved Quotes</div><div class="es">Build and generate a quote to save it here.</div></div>';
+    // Keep section visible with empty message if we're on the main panel
+    if(sec) sec.style.display='none';
     return;
   }
+  if(sec) sec.style.display='block';
+  sec.style.display='block';
+  $('saved-head').innerHTML=`Saved Quotes (${saved.length}) <span class="snote">&#x2713; in browser</span>`;
   const ct=STATS.reduce((a,s)=>{a[s.k]=saved.filter(q=>q.status===s.k).length;return a;},{});
   $('filter-bar').innerHTML=`<button class="fch${filt==='all'?' on':''}" onclick="setF('all')">All <span class="fcc">${saved.length}</span></button>`+STATS.map(s=>`<button class="fch${filt===s.k?' on':''}" onclick="setF('${s.k}')">${s.l} <span class="fcc">${ct[s.k]||0}</span></button>`).join('');
   const list=filt==='all'?saved:saved.filter(q=>q.status===filt);
-  $('saved-list').innerHTML=list.length?list.map(q=>`<div class="si ${q.status||'draft'}" onclick="loadQ('${q.id}')"><div style="flex:1;min-width:0"><div class="sn">${q.client} \u2014 ${q.service}</div><div class="sm">${q.quoteNum} \u00B7 ${q.date}${q.notes?' \uD83D\uDCDD':''}</div></div><div class="sir"><div class="sdots" onclick="event.stopPropagation()">${STATS.map(s=>`<div class="sdot${q.status===s.k?' on':''}" style="background:${s.c}" title="${s.l}" onclick="setStat('${q.id}','${s.k}');event.stopPropagation()"></div>`).join('')}</div><div class="stot">$${fmt(q.nums.total)}</div><div style="display:flex;gap:3px" onclick="event.stopPropagation()"><button class="sib" onclick="dupeQ('${q.id}')">Dupe</button>${currentRole==='admin'?`<button class="sib del" onclick="delQ('${q.id}')">&#x2715;</button>`:''}</div></div></div>`).join(''):`<div style="color:var(--mut);font-size:11px;padding:5px 0">No ${filt} quotes.</div>`;
+  $('saved-list').innerHTML=list.length?list.map(q=>`<div class="si ${q.status||'draft'}" onclick="loadQ('${q.id}')"><div style="flex:1;min-width:0"><div class="sn">${q.client} \u2014 ${q.service}</div><div class="sm">${q.quoteNum} \u00B7 ${q.date}${q.notes?' \uD83D\uDCDD':''}</div></div><div class="sir"><div class="sdots" onclick="event.stopPropagation()">${STATS.map(s=>`<div class="sdot${q.status===s.k?' on':''}" style="background:${s.c}" title="${s.l}" onclick="setStat('${q.id}','${s.k}');event.stopPropagation()"></div>`).join('')}</div><div class="stot">$${fmt(q.nums.total)}</div><div style="display:flex;gap:3px" onclick="event.stopPropagation()"><button class="sib" onclick="dupeQ('${q.id}')">Dupe</button><button class="sib del" onclick="delQ('${q.id}')">&#x2715;</button></div></div></div>`).join(''):`<div style="color:var(--mut);font-size:11px;padding:5px 0">No ${filt} quotes.</div>`;
 }
 function setF(f){filt=f;renderSaved();}
 async function refreshAndSync(){
@@ -1376,7 +1346,6 @@ function showPanel(panel){
     sb.classList.add('mob-show');
     // Fully hide the quote panel so no dark strip shows
     if(mp){ mp.style.display='none'; mp.style.width='0'; mp.style.overflow='hidden'; }
-    const sp=$('saved-panel'); if(sp) sp.classList.remove('active');
     $('mnb-form').classList.add('on');
     sb.scrollTop=0;
     window.scrollTo(0,0);
@@ -1386,8 +1355,7 @@ function showPanel(panel){
     if(mp){ mp.style.display=''; mp.style.width=''; mp.style.overflow=''; }
     const btn=$(panel==='quote'?'mnb-quote':'mnb-saved');
     if(btn) btn.classList.add('on');
-    if(panel==='saved'){ const sp=$('saved-panel'); if(sp){sp.classList.add('active');} }
-    else { const sp=$('saved-panel'); if(sp){sp.classList.remove('active');} }
+    if(panel==='saved') setTimeout(()=>{const s=$('saved-sec');if(s)s.scrollIntoView({behavior:'smooth'});},50);
     else window.scrollTo(0,0);
   }
 }
@@ -1399,26 +1367,6 @@ document.addEventListener('click',e=>{
     showPanel('quote');
   }
 });
-
-
-// ── PANEL / TAB SWITCHING ─────────────────────────────────────────────────
-function switchTab(tab){
-  const qp = $('qp-wrap'), sp = $('saved-panel');
-  const tq = $('tab-quote'), ts = $('tab-saved');
-  const qa = $('q-actions');
-  if(tab === 'saved'){
-    if(qp){ qp.style.display='none'; }
-    if(sp){ sp.classList.add('active'); }
-    if(tq) tq.classList.remove('on');
-    if(ts) ts.classList.add('on');
-    if(qa) qa.style.display='none';
-  } else {
-    if(qp){ qp.style.display=''; }
-    if(sp){ sp.classList.remove('active'); }
-    if(tq) tq.classList.add('on');
-    if(ts) ts.classList.remove('on');
-  }
-}
 
 function isMobile(){
   return window.innerWidth <= 860 || (window.innerWidth <= 1024 && window.innerHeight > window.innerWidth);
@@ -1705,7 +1653,7 @@ renderAnalytics();
 renderSaved();
 // Show saved section with loading indicator immediately
 (function(){
-  const sl=$('saved-list');
+  const ss=$('saved-sec'), sl=$('saved-list');
   if(ss) ss.style.display='block';
   if(sl&&!saved.length) sl.innerHTML='<div style="color:var(--mut);font-size:11px;padding:8px 0">&#x21BB; Loading quotes from server…</div>';
 })();
