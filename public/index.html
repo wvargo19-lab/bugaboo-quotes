@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#111410">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bugaboo Quotes">
 <title>Bugaboo Landscaping — Quote Builder</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -15,6 +16,20 @@
 :root{--g:#3d7a3a;--g2:#2f5f2d;--g3:#57a852;--bk:#111410;--obk:#1c1f1a;--card:#202419;--bdr:#2e3329;--mut:#6b7566;--txt:#dde8d8;--wht:#f4f7f2;--acc:#88c981;--rad:8px}
 
 
+
+
+/* ── CONFIRM DIALOG ─────────────────────────────────────────────────────── */
+#confirm-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px}
+#confirm-modal.open{display:flex}
+.confirm-card{background:var(--obk);border:1px solid var(--bdr);border-radius:14px;padding:28px 28px 22px;width:min(340px,92vw);text-align:center}
+.confirm-icon{font-size:32px;margin-bottom:12px}
+.confirm-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--wht);margin-bottom:8px}
+.confirm-msg{font-size:13px;color:var(--mut);line-height:1.5;margin-bottom:22px}
+.confirm-btns{display:flex;gap:10px}
+.confirm-cancel{flex:1;background:transparent;border:1px solid var(--bdr);border-radius:8px;padding:11px;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s}
+.confirm-cancel:hover{border-color:var(--g3);color:var(--g3)}
+.confirm-ok{flex:1;background:#c0392b;border:none;border-radius:8px;padding:11px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.confirm-ok:hover{background:#e05a5a}
 
 /* ── ADMIN PANEL ─────────────────────────────────────────────────────────── */
 #admin-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:8000;display:none;align-items:center;justify-content:center;padding:20px}
@@ -82,19 +97,19 @@
 html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM Sans',sans-serif;min-height:100vh}
 /* LAYOUT */
 .app{display:flex;min-height:100vh}
-.sb{width:600px;min-width:280px;max-width:80vw;flex-shrink:0;background:var(--obk);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow-y:auto;position:sticky;top:0;height:100vh}
+.sb{width:520px;min-width:280px;max-width:70vw;flex-shrink:0;background:var(--obk);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow-y:auto;position:sticky;top:0;height:100vh}
 .sh{padding:14px 18px 11px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;background:var(--bk);position:sticky;top:0;z-index:10;flex-shrink:0}
 .lm{width:34px;height:34px;border-radius:8px;background:var(--g);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#fff;flex-shrink:0}
 .bn{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;color:var(--wht);line-height:1}.bn span{color:var(--g3)}
 .bs{font-size:9px;color:var(--mut);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
 .fb{padding:10px 16px 32px;flex:1;overflow-y:auto}
-.qp{flex:1;min-width:0;background:var(--bk);padding:22px 28px;display:flex;flex-direction:column;min-height:100vh}
+.qp{flex:1;min-width:0;background:var(--bk);padding:24px 32px;display:flex;flex-direction:column;min-height:100vh}
 /* FORM */
-.st{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:3px;color:var(--g3);text-transform:uppercase;margin:16px 0 8px;display:flex;align-items:center;gap:6px}
+.st{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:3px;color:var(--g3);text-transform:uppercase;margin:20px 0 9px;display:flex;align-items:center;gap:6px}
 .st::after{content:'';flex:1;height:1px;background:var(--bdr)}
 .fld{margin-bottom:7px}
 .fld label{display:block;font-size:9px;letter-spacing:.5px;color:var(--mut);margin-bottom:3px;font-weight:500;text-transform:uppercase}
-.fld input,.fld select,.fld textarea{width:100%;background:var(--card);border:1px solid var(--bdr);border-radius:var(--rad);padding:8px 10px;color:var(--wht);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.fld input,.fld select,.fld textarea{width:100%;background:var(--card);border:1px solid var(--bdr);border-radius:var(--rad);padding:9px 11px;color:var(--wht);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;-webkit-appearance:none}
 .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--g3)}
 .fld select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%236b7566' d='M0 0l5 6 5-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
 .fld select option{background:var(--card);color:var(--wht)}
@@ -116,7 +131,7 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 .spread-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--acc);font-weight:500}
 /* PHASES */
 .phase{background:var(--card);border:1px solid var(--bdr);border-radius:var(--rad);margin-bottom:7px;overflow:hidden}
-.phase-hd{padding:11px 13px;display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.phase-hd{padding:13px 14px;display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;min-height:48px}
 .phase-icon{font-size:14px;flex-shrink:0}
 .phase-name{font-size:12px;font-weight:500;color:var(--txt);flex:1}
 .phase-pill{font-size:9px;font-family:'DM Mono',monospace;border-radius:10px;padding:2px 7px;background:var(--bdr);color:var(--mut);white-space:nowrap;flex-shrink:0}
@@ -145,7 +160,7 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 .mk-dot.on{background:currentColor}
 .gst-row{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:8px;border-top:1px solid var(--bdr)}
 .gst-lbl{font-size:11px;color:var(--mut)}
-.gb{width:100%;margin-top:16px;background:var(--g);border:none;border-radius:var(--rad);padding:13px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;cursor:pointer;transition:background .15s;touch-action:manipulation}
+.gb{width:100%;margin-top:20px;background:var(--g);border:none;border-radius:10px;padding:15px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;cursor:pointer;transition:background .15s;touch-action:manipulation}
 .gb:hover,.gb:active{background:var(--g3)}
 .gb:disabled{opacity:.6;pointer-events:none}
 .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:6px}
@@ -222,7 +237,7 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 .fch.on{border-color:var(--g3);color:var(--g3);background:rgba(87,168,82,.08)}
 .fcc{background:var(--bdr);border-radius:10px;padding:1px 5px;font-size:9px;font-family:'DM Mono',monospace}
 .fch.on .fcc{background:rgba(87,168,82,.2)}
-.si{background:var(--card);border:1px solid var(--bdr);border-left:3px solid var(--bdr);border-radius:var(--rad);padding:8px 11px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:border-color .15s;gap:7px;margin-bottom:5px}
+.si{background:var(--card);border:1px solid var(--bdr);border-left:3px solid var(--bdr);border-radius:var(--rad);padding:11px 13px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:border-color .15s;gap:7px;margin-bottom:5px}
 .si:hover{border-color:var(--g3)}.si.draft{border-left-color:#6b6020}.si.sent{border-left-color:#1e4e7a}
 .si.approved{border-left-color:#2a5c28}.si.declined{border-left-color:#6b2020}
 .sn{font-weight:500;font-size:11px;color:var(--wht)}.sm{font-size:10px;color:var(--mut);margin-top:1px}
@@ -234,7 +249,7 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 .sib{background:transparent;border:1px solid var(--bdr);border-radius:4px;padding:2px 7px;font-size:9px;color:var(--mut);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .sib:hover{border-color:var(--g3);color:var(--g3)}.sib.del:hover{border-color:#e05a5a;color:#e05a5a}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:48px 20px;color:var(--mut);flex:1}
-.et{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;margin-bottom:5px;color:var(--mut)}
+.et{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin-bottom:7px;color:var(--mut)}
 .es{font-size:12px;max-width:240px;line-height:1.6}
 .notes-area{width:100%;background:var(--card);border:1px solid var(--bdr);border-radius:var(--rad);padding:10px 12px;color:var(--wht);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:vertical;min-height:120px;max-height:400px;transition:border-color .15s}
 .notes-area:focus{border-color:var(--g3)}
@@ -254,14 +269,21 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 .meas-row{background:var(--bk);border:1px solid var(--bdr);border-radius:var(--rad);padding:9px 10px;margin-bottom:6px;position:relative}
 .meas-row .rb{position:absolute;top:5px;right:5px}
 .meas-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--g);color:#fff;padding:10px 22px;border-radius:22px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--g);color:#fff;padding:10px 22px;border-radius:22px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center}
 .toast.show{opacity:1}
-/* MOBILE */
+/* MOBILE + TABLET */
 .mob-nav{display:none}
 .splitter{width:8px;background:var(--bdr);cursor:col-resize;flex-shrink:0;position:relative;transition:background .15s;z-index:5}
 .splitter:hover,.splitter.dragging{background:var(--g3)}
 .splitter::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:40px;background:currentColor;border-radius:2px;opacity:.4}
-@media(max-width:860px){
+/* Tablet: sidebar narrower, quote panel gets more room */
+@media(min-width:861px) and (max-width:1100px){
+  .sb{width:420px}
+  .qp{padding:18px 20px}
+  .scards{grid-template-columns:1fr 1fr}
+}
+/* Full tab-bar layout for phones AND iPads in portrait */
+@media(max-width:860px),(max-width:1024px) and (orientation:portrait){
   html{-webkit-text-size-adjust:100%}
   /* Full-width single-panel layout — only one panel visible at a time */
   .app{display:block;min-height:100vh}
@@ -274,9 +296,9 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
   .sb{width:100% !important;max-width:100% !important;height:auto;position:static;border-right:none;display:none;box-sizing:border-box}
   .sb.mob-show{display:flex;flex-direction:column;min-height:calc(100vh - 64px);padding-bottom:80px}
   /* Quote panel — takes full width, hidden when form panel is active */
-  .qp{width:100%;padding:12px 14px 80px;box-sizing:border-box}
-  /* Tighter header on mobile */
-  .sh{padding:10px 14px 9px;gap:8px}
+  .qp{width:100%;padding:14px 16px 90px;box-sizing:border-box}
+  /* Tighter header on mobile with safe area support */
+  .sh{padding:env(safe-area-inset-top,10px) 14px 9px;gap:8px;padding-top:max(env(safe-area-inset-top),10px)}
   .lm{width:30px;height:30px;font-size:13px}
   .bn{font-size:15px}
   .bs{font-size:8px}
@@ -303,7 +325,7 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 <div class="app">
   <aside class="sb" id="sidebar">
     <div class="sh">
-      <div class="lm">BL</div>
+      <div class="lm" onclick="confirmSignOut()" title="Tap to sign out" style="cursor:pointer">BL</div>
       <div style="flex:1"><div class="bn">BUGABOO <span>LANDSCAPING</span></div><div class="bs">Quote Generator</div></div>
     <div id="sync-badge" style="font-size:10px;color:var(--mut);font-family:'DM Mono',monospace;padding:2px 0;min-width:60px;text-align:right"></div>
     <button id="admin-btn" onclick="openAdmin()" title="Admin settings" style="display:none;background:transparent;border:1px solid var(--bdr);border-radius:20px;color:var(--acc);font-size:12px;padding:3px 9px;cursor:pointer;margin-left:4px;line-height:1;flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s" onmouseover="this.style.borderColor='var(--g3)'" onmouseout="this.style.borderColor='var(--bdr)'" >&#x2699; Admin</button>
@@ -352,6 +374,19 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Saved
   </button>
 </nav>
+
+
+<div id="confirm-modal">
+  <div class="confirm-card">
+    <div class="confirm-icon">&#x1F5D1;</div>
+    <div class="confirm-title" id="confirm-title">Delete Quote?</div>
+    <div class="confirm-msg" id="confirm-msg">This will permanently remove this quote. This cannot be undone.</div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="confirm-ok" id="confirm-ok-btn" onclick="confirmOk()">Delete</button>
+    </div>
+  </div>
+</div>
 
 <div id="admin-modal">
   <div class="admin-card">
@@ -978,7 +1013,7 @@ function generate(){
       persist();
       renderSaved();
       $('q-actions').style.display='flex';
-      if(window.innerWidth<=860) showPanel('quote');
+      if(isMobile()) showPanel('quote');
     }catch(err){
       console.error(err);
       toast('Error: '+err.message.slice(0,80), 4000);
@@ -1171,7 +1206,13 @@ function dupeQ(id){const q=saved.find(x=>x.id===id);if(!q)return;const nq={...q,
 async function delQ(id){
   const q=saved.find(x=>x.id===id);
   if(!q) return;
-  // Remove locally first so UI feels instant
+  const ok = await showConfirm(
+    'Delete Quote?',
+    `"${q.client} — ${q.service}" (${q.quoteNum}) will be permanently deleted. This cannot be undone.`,
+    'Delete'
+  );
+  if(!ok) return;
+  // Remove locally
   saved=saved.filter(x=>x.id!==id);
   persist();
   renderSaved();
@@ -1233,7 +1274,7 @@ function newQuote(){
   renderForm();renderAnalytics();
   $('quote-out').innerHTML='<div class="empty"><div style="font-size:38px;opacity:.2;margin-bottom:12px">&#x1F4CB;</div><div class="et">No Quote Yet</div><div class="es">Fill in the site takeoff on the left.</div></div>';
   $('q-actions').style.display='none';
-  if(window.innerWidth<=860) showPanel('form');
+  if(isMobile()) showPanel('form');
   toast('Ready for a new quote');
 }
 
@@ -1298,7 +1339,7 @@ async function loadFromSupabase(silent=false){
 }
 
 function showPanel(panel){
-  if(window.innerWidth>860) return;
+  if(!isMobile()) return;
   const sb=$('sidebar'),mp=$('qp-wrap');
   document.querySelectorAll('.mnb').forEach(b=>b.classList.remove('on'));
   if(panel==='form'){
@@ -1326,6 +1367,10 @@ document.addEventListener('click',e=>{
     showPanel('quote');
   }
 });
+
+function isMobile(){
+  return window.innerWidth <= 860 || (window.innerWidth <= 1024 && window.innerHeight > window.innerWidth);
+}
 
 // ── DRAGGABLE SPLITTER (mouse + touch) ────────────────────────────────────
 (function(){
@@ -1355,25 +1400,25 @@ document.addEventListener('click',e=>{
   }
 
   // Mouse (desktop)
-  splitter.addEventListener('mousedown', e=>{ if(window.innerWidth<=860) return; startDrag(e.clientX); e.preventDefault(); });
+  splitter.addEventListener('mousedown', e=>{ if(isMobile()) return; startDrag(e.clientX); e.preventDefault(); });
   document.addEventListener('mousemove', e=>moveDrag(e.clientX));
   document.addEventListener('mouseup', endDrag);
 
   // Touch (iPad / touchscreen)
-  splitter.addEventListener('touchstart', e=>{ if(window.innerWidth<=860) return; startDrag(e.touches[0].clientX); e.preventDefault(); },{passive:false});
+  splitter.addEventListener('touchstart', e=>{ if(isMobile()) return; startDrag(e.touches[0].clientX); e.preventDefault(); },{passive:false});
   document.addEventListener('touchmove', e=>{ if(!dragging) return; moveDrag(e.touches[0].clientX); e.preventDefault(); },{passive:false});
   document.addEventListener('touchend', endDrag);
 
   // Restore saved width
   try{
     const sw = localStorage.getItem('bq_sidebar_w');
-    if(sw && window.innerWidth > 860) sb.style.width = sw + 'px';
+    if(sw && !isMobile()) sb.style.width = sw + 'px';
   }catch{}
 
   // Double-click / double-tap to toggle full width
   let lastTap = 0;
   function toggleWidth(){
-    if(window.innerWidth<=860) return;
+    if(isMobile()) return;
     const cur = sb.offsetWidth, full = Math.round(window.innerWidth*0.85), def = 600;
     sb.style.width = (cur > def+50 ? def : full) + 'px';
     try{ localStorage.setItem('bq_sidebar_w', sb.offsetWidth); }catch{}
@@ -1418,12 +1463,9 @@ function doLogin(){
   currentUser = { role: currentRole, pin };
   try{ sessionStorage.setItem('bq_auth', JSON.stringify(currentUser)); }catch{}
   document.getElementById('login-screen').style.display = 'none';
-  // If admin, show the admin panel button
-  if(currentRole === 'admin'){
-    const ab = document.getElementById('admin-btn');
-    if(ab) ab.style.display = 'inline-block';
-  }
-  toast('Welcome back' + (currentRole==='admin' ? ' — Admin mode' : '') + ' &#x1F44B;');
+  // Show role chip in header
+  updateHeaderRole();
+  toast('Welcome back' + (currentRole==='admin' ? ' — Admin mode ⚙' : ' 👷') );
 }
 
 // Auto-login if session still active
@@ -1435,7 +1477,7 @@ function doLogin(){
       if(u && u.role && u.pin && PINS[u.role] && PINS[u.role].includes(u.pin)){
         currentUser = u; currentRole = u.role;
         document.getElementById('login-screen').style.display = 'none';
-        if(u.role==='admin'){ const ab=document.getElementById('admin-btn'); if(ab) ab.style.display='inline-block'; }
+        updateHeaderRole();
         return;
       }
     }
@@ -1445,7 +1487,45 @@ function doLogin(){
 })();
 
 
+
+// ── CONFIRM DIALOG ────────────────────────────────────────────────────────
+let _confirmResolve = null;
+function showConfirm(title, msg, okLabel='Delete'){
+  return new Promise(resolve=>{
+    _confirmResolve = resolve;
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-msg').textContent = msg;
+    document.getElementById('confirm-ok-btn').textContent = okLabel;
+    document.getElementById('confirm-modal').classList.add('open');
+  });
+}
+function closeConfirm(){
+  document.getElementById('confirm-modal').classList.remove('open');
+  if(_confirmResolve){ _confirmResolve(false); _confirmResolve=null; }
+}
+function confirmOk(){
+  document.getElementById('confirm-modal').classList.remove('open');
+  if(_confirmResolve){ _confirmResolve(true); _confirmResolve=null; }
+}
+
 // ── ADMIN PANEL ───────────────────────────────────────────────────────────
+
+
+async function confirmSignOut(){
+  const ok = await showConfirm('Sign Out?', 'You will need your PIN to sign back in.', 'Sign Out');
+  if(ok) logOut();
+}
+function updateHeaderRole(){
+  const ab = document.getElementById('admin-btn');
+  const tb = document.getElementById('theme-btn');
+  if(currentRole === 'admin'){
+    if(ab){ ab.style.display = 'inline-block'; }
+  }
+  // Update subtitle to show role
+  const bs = document.querySelector('.bs');
+  if(bs) bs.textContent = currentRole === 'admin' ? 'Head Office — Admin' : 'Field Operator';
+}
+
 function openAdmin(){
   if(!currentUser || currentUser.role !== 'admin'){ toast('Admin access only'); return; }
   renderOpPinList();
@@ -1583,8 +1663,8 @@ loadFromSupabase();
 setInterval(()=>{
   loadFromSupabase(true); // silent=true, no toast
 }, 30000);
-if(window.innerWidth<=860){
-  // Mobile: start on form tab so operators see the input immediately
+if(isMobile()){
+  // Mobile/tablet portrait: start on form tab so operators see inputs immediately
   showPanel('form');
 }
 </script>
