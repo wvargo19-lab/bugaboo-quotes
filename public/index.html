@@ -15,6 +15,26 @@
 :root{--g:#3d7a3a;--g2:#2f5f2d;--g3:#57a852;--bk:#111410;--obk:#1c1f1a;--card:#202419;--bdr:#2e3329;--mut:#6b7566;--txt:#dde8d8;--wht:#f4f7f2;--acc:#88c981;--rad:8px}
 
 
+
+/* ── ADMIN PANEL ─────────────────────────────────────────────────────────── */
+#admin-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:8000;display:none;align-items:center;justify-content:center;padding:20px}
+#admin-modal.open{display:flex}
+.admin-card{background:var(--obk);border:1px solid var(--bdr);border-radius:14px;width:min(480px,95vw);max-height:85vh;overflow-y:auto;padding:24px 28px}
+.admin-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:var(--wht);margin-bottom:4px}
+.admin-sub{font-size:11px;color:var(--mut);margin-bottom:20px}
+.admin-section{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--g3);font-weight:600;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--bdr)}
+.pin-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pin-row-label{font-size:12px;color:var(--txt);flex:1;min-width:0}
+.pin-row-sub{font-size:10px;color:var(--mut);margin-top:1px}
+.pin-input{width:110px;background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:7px 10px;color:var(--wht);font-size:14px;font-family:'DM Mono',monospace;text-align:center;outline:none;transition:border-color .15s;flex-shrink:0}
+.pin-input:focus{border-color:var(--g3)}
+.pin-save-btn{background:var(--g);border:none;border-radius:7px;color:#fff;font-size:11px;font-family:'DM Sans',sans-serif;font-weight:600;padding:7px 13px;cursor:pointer;white-space:nowrap;transition:background .15s;flex-shrink:0}
+.pin-save-btn:hover{background:var(--g3)}
+.admin-close{float:right;background:transparent;border:1px solid var(--bdr);border-radius:7px;color:var(--mut);font-size:12px;padding:5px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.admin-close:hover{border-color:#e05a5a;color:#e05a5a}
+.admin-logout{width:100%;background:transparent;border:1px solid #e05a5a33;border-radius:8px;color:#e05a5a;font-family:'DM Sans',sans-serif;font-size:13px;padding:10px;cursor:pointer;margin-top:18px;transition:all .15s}
+.admin-logout:hover{background:#e05a5a22}
+
 /* ── LOGIN SCREEN ────────────────────────────────────────────────────── */
 #login-screen{position:fixed;inset:0;background:var(--bk);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
 .login-card{background:var(--obk);border:1px solid var(--bdr);border-radius:14px;padding:36px 40px;width:min(380px,90vw);display:flex;flex-direction:column;align-items:center;gap:0}
@@ -243,22 +263,34 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
 .splitter::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:40px;background:currentColor;border-radius:2px;opacity:.4}
 @media(max-width:860px){
   html{-webkit-text-size-adjust:100%}
-  .app{display:block}
+  /* Full-width single-panel layout — only one panel visible at a time */
+  .app{display:block;min-height:100vh}
   .splitter{display:none}
+  /* Bottom nav bar */
   .mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--obk);border-top:1px solid var(--bdr);z-index:50;padding-bottom:env(safe-area-inset-bottom,0)}
   .mnb{flex:1;padding:12px 6px 10px;border:none;background:transparent;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent}
   .mnb.on{color:var(--g3)}.mnb svg{width:22px;height:22px}
-  .sb{width:100%;height:auto;position:static;border-right:none;display:none}
-  .sb.mob-show{display:flex;flex-direction:column;min-height:100vh;padding-bottom:72px}
-  .qp{padding:14px 14px 80px}
+  /* Sidebar (form panel) — hidden by default, takes full width when shown */
+  .sb{width:100% !important;max-width:100% !important;height:auto;position:static;border-right:none;display:none;box-sizing:border-box}
+  .sb.mob-show{display:flex;flex-direction:column;min-height:calc(100vh - 64px);padding-bottom:80px}
+  /* Quote panel — takes full width, hidden when form panel is active */
+  .qp{width:100%;padding:12px 14px 80px;box-sizing:border-box}
+  /* Tighter header on mobile */
+  .sh{padding:10px 14px 9px;gap:8px}
+  .lm{width:30px;height:30px;font-size:13px}
+  .bn{font-size:15px}
+  .bs{font-size:8px}
+  /* Bigger touch targets for inputs */
   .fld input,.fld select,.fld textarea{font-size:16px !important;padding:10px 12px}
   .r3{grid-template-columns:1fr 1fr}
   .r4{grid-template-columns:1fr 1fr}
   .scards{grid-template-columns:1fr 1fr}
   .ct-head,.ct-row,.ct-total{grid-template-columns:1fr 80px 80px 52px;gap:5px}
-  .qi{padding:12px 18px}.qb{padding:14px 18px}.qct{padding:16px 18px}
-  .tbar{margin:10px -18px -14px;padding:12px 18px}
-  .qss{padding:7px 18px}
+  .qi{padding:12px 16px}.qb{padding:14px 16px}.qct{padding:14px 16px}
+  .tbar{margin:10px -16px -14px;padding:12px 16px}
+  .qss{padding:7px 16px}
+  /* Hide theme button text overflow on small screens */
+  #theme-btn{font-size:13px;padding:3px 7px}
 }
 @media print{
   .sb,.mob-nav,.qph,.qa,.ssec,.toast,.qss,.scards,.mbar,.ctable{display:none !important}
@@ -274,6 +306,7 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
       <div class="lm">BL</div>
       <div style="flex:1"><div class="bn">BUGABOO <span>LANDSCAPING</span></div><div class="bs">Quote Generator</div></div>
     <div id="sync-badge" style="font-size:10px;color:var(--mut);font-family:'DM Mono',monospace;padding:2px 0;min-width:60px;text-align:right"></div>
+    <button id="admin-btn" onclick="openAdmin()" title="Admin settings" style="display:none;background:transparent;border:1px solid var(--bdr);border-radius:20px;color:var(--acc);font-size:12px;padding:3px 9px;cursor:pointer;margin-left:4px;line-height:1;flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s" onmouseover="this.style.borderColor='var(--g3)'" onmouseout="this.style.borderColor='var(--bdr)'" >&#x2699; Admin</button>
     <button id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark" style="background:transparent;border:1px solid var(--bdr);border-radius:20px;color:var(--mut);font-size:14px;padding:3px 9px;cursor:pointer;margin-left:6px;line-height:1;flex-shrink:0;transition:all .15s" onmouseover="this.style.borderColor='var(--g3)';this.style.color='var(--g3)'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--mut)'">&#x263D;</button>
     <div id="saved-badge" style="display:none;background:rgba(87,168,82,.2);color:var(--g3);font-family:'DM Mono',monospace;font-size:11px;border-radius:12px;padding:3px 9px;white-space:nowrap"></div>
     </div>
@@ -319,6 +352,29 @@ html{font-size:15px}body{background:var(--bk);color:var(--txt);font-family:'DM S
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Saved
   </button>
 </nav>
+
+<div id="admin-modal">
+  <div class="admin-card">
+    <button class="admin-close" onclick="closeAdmin()">✕ Close</button>
+    <div class="admin-title">ADMIN PANEL</div>
+    <div class="admin-sub">Manage operator PINs and app settings</div>
+
+    <div class="admin-section">Field Operator PINs</div>
+    <div style="font-size:11px;color:var(--mut);margin-bottom:12px">Each operator gets a unique PIN. They use it to sign in on their own device.</div>
+    <div id="op-pin-list"></div>
+    <button onclick="addOpPin()" style="width:100%;background:transparent;border:1px dashed var(--bdr);border-radius:8px;padding:8px;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;margin-top:4px" onmouseover="this.style.borderColor='var(--g3)';this.style.color='var(--g3)'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--mut)'">+ Add Operator PIN</button>
+
+    <div class="admin-section">Admin PIN</div>
+    <div id="admin-pin-row" class="pin-row">
+      <div style="flex:1"><div class="pin-row-label">Head Office PIN</div><div class="pin-row-sub">Use this to access admin settings</div></div>
+      <input class="pin-input" id="admin-pin-input" type="password" maxlength="8" placeholder="••••">
+      <button class="pin-save-btn" onclick="saveAdminPin()">Save</button>
+    </div>
+
+    <div class="admin-section">Session</div>
+    <button class="admin-logout" onclick="logOut()">&#x1F6AA; Sign Out</button>
+  </div>
+</div>
 
 <div id="login-screen">
   <div class="login-card">
@@ -1247,12 +1303,15 @@ function showPanel(panel){
   document.querySelectorAll('.mnb').forEach(b=>b.classList.remove('on'));
   if(panel==='form'){
     sb.classList.add('mob-show');
-    if(mp) mp.style.display='none';
+    // Fully hide the quote panel so no dark strip shows
+    if(mp){ mp.style.display='none'; mp.style.width='0'; mp.style.overflow='hidden'; }
     $('mnb-form').classList.add('on');
     sb.scrollTop=0;
+    window.scrollTo(0,0);
   } else {
     sb.classList.remove('mob-show');
-    if(mp) mp.style.display='';
+    // Restore quote panel to full width
+    if(mp){ mp.style.display=''; mp.style.width=''; mp.style.overflow=''; }
     const btn=$(panel==='quote'?'mnb-quote':'mnb-saved');
     if(btn) btn.classList.add('on');
     if(panel==='saved') setTimeout(()=>{const s=$('saved-sec');if(s)s.scrollIntoView({behavior:'smooth'});},50);
@@ -1359,10 +1418,10 @@ function doLogin(){
   currentUser = { role: currentRole, pin };
   try{ sessionStorage.setItem('bq_auth', JSON.stringify(currentUser)); }catch{}
   document.getElementById('login-screen').style.display = 'none';
-  // If admin, show the admin badge in header
+  // If admin, show the admin panel button
   if(currentRole === 'admin'){
-    const sb = document.getElementById('sync-badge');
-    if(sb){ sb.textContent = '&#x1F4BC; Admin'; sb.style.color = 'var(--acc)'; setTimeout(()=>sb.innerHTML='',3000); }
+    const ab = document.getElementById('admin-btn');
+    if(ab) ab.style.display = 'inline-block';
   }
   toast('Welcome back' + (currentRole==='admin' ? ' — Admin mode' : '') + ' &#x1F44B;');
 }
@@ -1376,12 +1435,110 @@ function doLogin(){
       if(u && u.role && u.pin && PINS[u.role] && PINS[u.role].includes(u.pin)){
         currentUser = u; currentRole = u.role;
         document.getElementById('login-screen').style.display = 'none';
+        if(u.role==='admin'){ const ab=document.getElementById('admin-btn'); if(ab) ab.style.display='inline-block'; }
         return;
       }
     }
   }catch{}
   // Focus PIN input
   setTimeout(()=>{ const el=document.getElementById('login-pin'); if(el) el.focus(); }, 100);
+})();
+
+
+// ── ADMIN PANEL ───────────────────────────────────────────────────────────
+function openAdmin(){
+  if(!currentUser || currentUser.role !== 'admin'){ toast('Admin access only'); return; }
+  renderOpPinList();
+  renderAdminPinInput();
+  document.getElementById('admin-modal').classList.add('open');
+}
+function closeAdmin(){ document.getElementById('admin-modal').classList.remove('open'); }
+
+function renderOpPinList(){
+  const list = document.getElementById('op-pin-list');
+  if(!list) return;
+  list.innerHTML = PINS.field.map((pin, i) => `
+    <div class="pin-row">
+      <div style="flex:1">
+        <div class="pin-row-label">Operator ${i+1}</div>
+        <div class="pin-row-sub">Current PIN: <span style="font-family:'DM Mono',monospace;color:var(--acc)">${pin}</span></div>
+      </div>
+      <input class="pin-input" type="text" inputmode="numeric" maxlength="8" value="${pin}"
+        id="op-pin-${i}" placeholder="New PIN">
+      <button class="pin-save-btn" onclick="saveOpPin(${i})">Save</button>
+      ${PINS.field.length > 1 ? `<button onclick="removeOpPin(${i})" style="background:transparent;border:1px solid var(--bdr);border-radius:7px;color:var(--mut);font-size:16px;padding:4px 9px;cursor:pointer;line-height:1" onmouseover="this.style.borderColor='#e05a5a';this.style.color='#e05a5a'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--mut)'" title="Remove this PIN">&#xD7;</button>` : ''}
+    </div>`).join('');
+}
+
+function renderAdminPinInput(){
+  const el = document.getElementById('admin-pin-input');
+  if(el){ el.value = ''; el.placeholder = '••••  (current: ' + PINS.admin[0] + ')'; }
+}
+
+function saveOpPin(i){
+  const el = document.getElementById('op-pin-' + i);
+  if(!el) return;
+  const val = el.value.trim();
+  if(!val || val.length < 3){ toast('PIN must be at least 3 characters'); return; }
+  PINS.field[i] = val;
+  savePinsToStorage();
+  renderOpPinList();
+  toast('✓ Operator ' + (i+1) + ' PIN updated to ' + val);
+}
+
+function removeOpPin(i){
+  if(PINS.field.length <= 1){ toast('Need at least one operator PIN'); return; }
+  PINS.field.splice(i, 1);
+  savePinsToStorage();
+  renderOpPinList();
+  toast('Operator PIN removed');
+}
+
+function addOpPin(){
+  PINS.field.push('0000');
+  savePinsToStorage();
+  renderOpPinList();
+  // Focus the new input
+  const newI = PINS.field.length - 1;
+  setTimeout(()=>{ const el=document.getElementById('op-pin-'+newI); if(el){el.value='';el.focus();el.select();}}, 50);
+}
+
+function saveAdminPin(){
+  const el = document.getElementById('admin-pin-input');
+  if(!el) return;
+  const val = el.value.trim();
+  if(!val || val.length < 3){ toast('Admin PIN must be at least 3 characters'); return; }
+  PINS.admin[0] = val;
+  savePinsToStorage();
+  renderAdminPinInput();
+  toast('✓ Admin PIN updated');
+}
+
+function savePinsToStorage(){
+  try{ localStorage.setItem('bq_pins', JSON.stringify(PINS)); }catch{}
+}
+
+function logOut(){
+  try{ sessionStorage.removeItem('bq_auth'); }catch{}
+  currentUser = null;
+  closeAdmin();
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-btn').style.display = 'none';
+  const pinEl = document.getElementById('login-pin');
+  if(pinEl){ pinEl.value=''; pinEl.focus(); }
+  toast('Signed out');
+}
+
+// Load saved PINs from storage (admin may have changed them)
+(function loadSavedPins(){
+  try{
+    const stored = localStorage.getItem('bq_pins');
+    if(stored){
+      const p = JSON.parse(stored);
+      if(p.field && Array.isArray(p.field) && p.field.length) PINS.field = p.field;
+      if(p.admin && Array.isArray(p.admin) && p.admin.length) PINS.admin = p.admin;
+    }
+  }catch{}
 })();
 
 // ── LIGHT / DARK MODE ─────────────────────────────────────────────────────
